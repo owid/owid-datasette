@@ -1,1 +1,1 @@
-wget --output-document owid.db https://files.ourworldindata.org/owid.sqlite.gz
+wget -O - https://files.ourworldindata.org/owid.sqlite.gz | gunzip -c > owid.db
