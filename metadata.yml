@@ -1,0 +1,9 @@
+title: Our World In Data SQLITE Database
+description_html: |-
+  <p>This database is a copy of the metadata and prose content of the Our World In Data Website. It allows you to
+  make queries against the full text of our articles, filter variables by name and date added etc.</p>
+  <p>
+    This database does not contain all the data that Our World In Data keeps and thus can't be used to plot graphs.
+  </p>
+license: CC-BY
+license_url: https://creativecommons.org/licenses/by/4.0/legalcode

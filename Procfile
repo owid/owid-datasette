@@ -1,0 +1,1 @@
+web: datasette -i . -h 0.0.0.0 -p $PORT --cors
