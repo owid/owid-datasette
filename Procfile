@@ -1,1 +1,1 @@
-web: datasette -i owid.db -h 0.0.0.0 -p $PORT --cors
+web: datasette -h 0.0.0.0 -p $PORT --cors owid.db
