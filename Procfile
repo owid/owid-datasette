@@ -1,1 +1,1 @@
-web: datasette -h 0.0.0.0 -p $PORT --cors owid.db
+web: datasette -h 0.0.0.0 -p $PORT --cors -m metadata.yml owid.db
