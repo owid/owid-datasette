@@ -1,3 +1,6 @@
 owid.sqlite
+owid.db
+owid.db.gz
 owid.sqlite.gz
 owid.db
+.env
