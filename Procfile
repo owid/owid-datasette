@@ -1,1 +1,1 @@
-web: datasette -h 0.0.0.0 -p $PORT --cors -m metadata.yml owid.db
+web: datasette -h 0.0.0.0 -p $PORT --cors -m metadata.yml --setting sql_time_limit_ms 1800 --setting default_cache_ttl 3600 owid.db

@@ -1,9 +1,92 @@
 title: Our World In Data SQLITE Database
 description_html: |-
-  <p>This database is a copy of the metadata and prose content of the <a href="https://ourworldindata.org">Our World In Data Website</a>. It allows you to
-  make queries against the full text of our articles, filter variables by name and date added etc.</p>
+  <p>This <a href="https://datasette.io/">Datasette</a> instance exposes a database that is a copy of the metadata and prose content of the <a href="https://ourworldindata.org">Our World In Data Website</a>. It enables
+   queries against the full text of our articles, filter variables by name and date added etc.</p>
   <p>
-    This database does not contain all the data that Our World In Data keeps and thus can't be used to plot graphs.
+    This database does not contain all the data that Our World In Data keeps and thus can't be used to plot graphs. The schema of this database is expected to
+    evolve along with the needs of our internal tools. For any feedback or to follow development check out the <a href="https://github.com/owid/owid-datasette">projects github repository</a>.
   </p>
 license: CC-BY
 license_url: https://creativecommons.org/licenses/by/4.0/legalcode
+databases:
+  owid:
+    tables:
+      chart_tags:
+        description: Relationship table to link charts and tags
+      chart_slug_redirects:
+        sort_desc: id
+        description: Redirects for charts used on the Our World In Data website to enable old links to still work after slug renames
+      charts:
+        sort_desc: id
+        description_html: |
+          <p>This table contains the information used by our <a href="https://github.com/owid/owid-grapher">Grapher datavisualisation tool</a> to render charts. </p>
+          <p>The most relevant field is the config field that contains json stored as text. A <a href="https://owid.nyc3.digitaloceanspaces.com/schemas/grapher-schema.001.json">JSON Schema</a>
+             is available that describes the content of this json data. The SQLite JSON_EXTRACT function can be used in SQL queries to extract the content of this JSON data into columns in a result table.
+          </p>
+          <p>
+            For convenience, a view with the name charts_view is provided that contains the same content as this table but extracts a few of the most commonly used fields from the JSON data in the config column
+            into separate columns.
+          </p>
+      charts_view:
+        sort_desc: id
+        label_column: title
+        description_html: |
+          <p>This view extends the charts table by a few convenience fields extracted from the config into separate colums.</p>
+          <p>Just like the underlying charts table, this view contains the information used by our <a href="https://github.com/owid/owid-grapher">Grapher datavisualisation tool</a> to render charts. </p>
+          <p>The most relevant field is the config field that contains json stored as text. A <a href="https://owid.nyc3.digitaloceanspaces.com/schemas/grapher-schema.001.json">JSON Schema</a>
+             is available that describes the content of this json data. The SQLite JSON_EXTRACT function can be used in SQL queries to extract the content of this JSON data into columns in a result table.
+             The commonly used fields title, subtitle, note and a few more have already been extracted into columns in this view.
+          </p>
+      dataset_tags:
+        description: Relationship table to link datasets and tags
+      datasets:
+        sort_desc: id
+        label_column: name
+        description: This table contains information on all the datasets we publish. Variables are linked to a dataset in a n:1 relationship
+      namespaces:
+        sort_desc: id
+        label_column: name
+        description: |
+          Namespaces are used inside Our World In Data to group datasets together. Roughly it can be said that datsets in the "owid"
+          namespace were uploaded as individual datasets (often directly by authors), whereas the other namespaces contain datasets that
+          are bulk imported from an upstream data provider that gives the namespace it's name (e.g. the WHO)
+      post_tags:
+        description: Relationship table to link posts and tags
+      posts:
+        sort_desc: id
+        label_column: title
+        description: |
+          This table contains the full text for all our posts in html form. The format is a bit odd as it represents a direct copy from
+          wordpress content that includes a lot of wordpress specific comments that carry some meaning in terms of layout instructions etc..
+          The html in the content column can thus be rendered as is but will not look identical to the way it looks on our website as several
+          post processing steps are not applied yet. The content should work though as a readable approximation for every post.
+      sources:
+        sort_desc: id
+        label_column: name
+        description: |
+          This table contains all the sources for our datasets. The description column contains JSON encoded as text that contains useful
+          additional fields like a longer descriptive text "additionalInfo".
+
+          For convenience, a view with the name sources_view is provided that contains the same content as this table but extracts a few of the most commonly used fields from the JSON data in the description column
+          into separate columns.
+      sources_view:
+        sort_desc: id
+        label_column: name
+        description: |
+          This view extends the sources table by a few convenience fields extracted from the description field into separate colums.
+
+          Like the underlying table, this view contains all the sources for our datasets.
+      tags:
+        sort_desc: id
+        label_column: name
+        description: Tags used in the database for various entities
+      users:
+        sort_desc: id
+        label_column: fullName
+        description: Table with all our users with write access
+      variables:
+        sort_desc: id
+        label_column: name
+        description: |
+          This table contains all the variables of all the datasets we have at Our World In Data. Note that this includes only the information about the
+          variables like name and default display settings, not the data itself.
