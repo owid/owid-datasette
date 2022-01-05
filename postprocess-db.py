@@ -5,7 +5,9 @@ with closing(sqlite3.connect("owid.db")) as connection:
     with closing(connection.cursor()) as cursor:
         # drop column is only supported in SQLite >= 3.35.0 which is not yet available in many common python envs
         #cursor.execute("ALTER TABLE users DROP COLUMN password")
+        print("Ensuring no passwords are published")
         cursor.execute("UPDATE users set password=''")
+        print("Create charts_view")
         cursor.execute("""CREATE VIEW charts_view AS
         SELECT *,
             JSON_EXTRACT(config, '$.title') as title,
@@ -15,6 +17,7 @@ with closing(sqlite3.connect("owid.db")) as connection:
             JSON_EXTRACT(config, '$.type') as type
         FROM charts
             """)
+        print("Create sources_view")
         cursor.execute("""CREATE VIEW sources_view AS
         SELECT *,
             JSON_EXTRACT(description, '$.additionalInfo') as additionalInfo,
@@ -22,3 +25,5 @@ with closing(sqlite3.connect("owid.db")) as connection:
             JSON_EXTRACT(description, '$.dataPublishedBy') as dataPublishedBy
         FROM sources
             """)
+        connection.commit()
+        print("done")
