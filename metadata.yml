@@ -18,24 +18,11 @@ databases:
         description: Redirects for charts used on the Our World In Data website to enable old links to still work after slug renames
       charts:
         sort_desc: id
+        label_column: title
         description_html: |
           <p>This table contains the information used by our <a href="https://github.com/owid/owid-grapher">Grapher datavisualisation tool</a> to render charts. </p>
           <p>The most relevant field is the config field that contains json stored as text. A <a href="https://owid.nyc3.digitaloceanspaces.com/schemas/grapher-schema.001.json">JSON Schema</a>
              is available that describes the content of this json data. The SQLite JSON_EXTRACT function can be used in SQL queries to extract the content of this JSON data into columns in a result table.
-          </p>
-          <p>
-            For convenience, a view with the name charts_view is provided that contains the same content as this table but extracts a few of the most commonly used fields from the JSON data in the config column
-            into separate columns.
-          </p>
-      charts_view:
-        sort_desc: id
-        label_column: title
-        description_html: |
-          <p>This view extends the charts table by a few convenience fields extracted from the config into separate colums.</p>
-          <p>Just like the underlying charts table, this view contains the information used by our <a href="https://github.com/owid/owid-grapher">Grapher datavisualisation tool</a> to render charts. </p>
-          <p>The most relevant field is the config field that contains json stored as text. A <a href="https://owid.nyc3.digitaloceanspaces.com/schemas/grapher-schema.001.json">JSON Schema</a>
-             is available that describes the content of this json data. The SQLite JSON_EXTRACT function can be used in SQL queries to extract the content of this JSON data into columns in a result table.
-             The commonly used fields title, subtitle, note and a few more have already been extracted into columns in this view.
           </p>
       dataset_tags:
         description: Relationship table to link datasets and tags
@@ -66,16 +53,6 @@ databases:
         description: |
           This table contains all the sources for our datasets. The description column contains JSON encoded as text that contains useful
           additional fields like a longer descriptive text "additionalInfo".
-
-          For convenience, a view with the name sources_view is provided that contains the same content as this table but extracts a few of the most commonly used fields from the JSON data in the description column
-          into separate columns.
-      sources_view:
-        sort_desc: id
-        label_column: name
-        description: |
-          This view extends the sources table by a few convenience fields extracted from the description field into separate colums.
-
-          Like the underlying table, this view contains all the sources for our datasets.
       tags:
         sort_desc: id
         label_column: name
@@ -90,3 +67,12 @@ databases:
         description: |
           This table contains all the variables of all the datasets we have at Our World In Data. Note that this includes only the information about the
           variables like name and default display settings, not the data itself.
+      post_links:
+        sort_desc: postId
+        description: |
+          This table is generated from the HTML content of the posts table and extracts different kinds of linked content.
+          The kinds of links currently used are: internal_link, external_link and image.
+      post_charts:
+        sort_desc: postId
+        description: |
+          This table is generated from the HTML content of the posts table and extracts iframe links to grapher charts.
