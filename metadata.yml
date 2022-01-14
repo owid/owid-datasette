@@ -1,7 +1,7 @@
 title: Our World In Data SQlite Database
 description_html: |-
   <p>This <a href="https://datasette.io/">Datasette</a> instance exposes a database that is a copy of the metadata and prose content of the <a href="https://ourworldindata.org">Our World In Data Website</a>. It enables
-   queries against the full text of our articles, filter variables by name and date added etc.</p>
+   queries against the full text of our articles, filter variables by name and date added etc. Only the text of published articles is included at this time.</p>
   <p>
     This database does not contain all the data that Our World In Data keeps and thus can't be used to plot graphs. The schema of this database is expected to
     evolve along with the needs of our internal tools. For any feedback or to follow development check out the <a href="https://github.com/owid/owid-datasette">projects github repository</a>.
