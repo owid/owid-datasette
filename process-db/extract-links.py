@@ -49,7 +49,7 @@ def postprocess(args):
             for row in track(rows, description="Processing posts..."):
                 soup = BeautifulSoup(row["content"], "html.parser")
 
-                links = filter(lambda link: link is not None, map(lambda link: link.get("href"), soup.find_all("a")))
+                links = list(filter(lambda link: link is not None, map(lambda link: link.get("href"), soup.find_all("a"))))
                 internal_links = [ link for link in links if internalUrlRegex.match(link) ]
                 params = [ {"postId": row["id"], "link": link, "kind": "internal-link" } for link in internal_links ]
                 cursor.executemany("""
