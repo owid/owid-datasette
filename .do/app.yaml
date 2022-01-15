@@ -4,8 +4,7 @@ alerts:
 name: owid-datasette
 region: fra
 services:
-- environment_slug: python
-  github:
+- github:
     branch: main
     deploy_on_push: true
     repo: owid/owid-datasette
