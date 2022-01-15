@@ -56,7 +56,7 @@ def postprocess(args):
                 INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
                 """, params)
 
-                external_links = [ link for link in links if not internalUrlRegex.match(link) ]
+                external_links = [ link for link in links if internalUrlRegex.match(link) is None ]
                 params = [ {"postId": row["id"], "link": link, "kind": "external-link" } for link in external_links ]
                 cursor.executemany("""
                 INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)

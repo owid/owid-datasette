@@ -6,6 +6,10 @@ description_html: |-
     This database does not contain all the data that Our World In Data keeps and thus can't be used to plot graphs. The schema of this database is expected to
     evolve along with the needs of our internal tools. For any feedback or to follow development check out the <a href="https://github.com/owid/owid-datasette">projects github repository</a>.
   </p>
+  <p>
+    This Datasette instance also features the jupyterlite plugin so you can use the pyodide notebook setup to write python notebooks that are evaluated in
+    your browser. Navigate to <a href="/jupyterlite/">/jupyterlite/</a> to get started and refer to the <a href="https://datasette.io/plugins/datasette-jupyterlite">plugin docs</a> for more information on how to get started.
+  </p>
 license: CC-BY
 license_url: https://creativecommons.org/licenses/by/4.0/legalcode
 databases:

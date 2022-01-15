@@ -1,1 +1,0 @@
-wget -O - https://files.ourworldindata.org/owid.db.gz | gunzip -c > owid.db
