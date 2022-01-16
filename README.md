@@ -3,5 +3,6 @@ This repository is a test to see if a read only SQLite copy and a [Datasette](ht
 The database for now is generated with the [mysql-to-sqlite3](https://github.com/techouse/mysql-to-sqlite3/tree/master/mysql_to_sqlite3) tool, using the command in the bash script sqlite-from-mysql.sh. This could be automated. There are a few issues with the file that is generated (e.g. foreign key constraints are not correctly migrated which makes datasette not understand relations) but for now this is acceptable.
 
 ## TODO
+- [ ] In the post_links table we should consider creating a links table that stores domain, relative url and query string separately and dedupe link targets. This way we could go the reverse direction from links and say "which posts link to the fao.org domain"?
 - [ ] When iframe src links can't be linked and entered into the post_charts table then this is probably an error in the post. These should end up in the datasette db in a separate table
 - [ ] Add authors information into the mysql db so we can link posts to users
