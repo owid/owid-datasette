@@ -80,3 +80,8 @@ databases:
         sort_desc: postId
         description: |
           This table is generated from the HTML content of the posts table and extracts iframe links to grapher charts.
+      variable_statistics:
+        description: |
+          This table contains a some summary statistics about the data values for most variables. For historical and performance
+          reasons, creating this table is currently done at different intervals than the rest of the sqlite dump and so the very
+          most recent variables may not be present in this statistics table.
