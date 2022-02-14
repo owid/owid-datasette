@@ -19,4 +19,4 @@ python process-db/extract-links.py owid.db
 # Gzip the file
 gzip -9 -c owid.db > owid.db.gz
 # And upload to s3
-s3cmd put -P owid.db.gz s3://owid
+s3cmd put -P owid.db.gz s3://owid-public
