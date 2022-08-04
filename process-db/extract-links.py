@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+from typing import Dict
 from bs4 import BeautifulSoup
 from contextlib import closing
 from rich import print
@@ -10,6 +11,41 @@ grapherUrlRegex = re.compile(
     "^http(s)?://(www\\.)?ourworldindata.org/grapher/(?P<slug>[^?]+)"
 )
 internalUrlRegex = re.compile("^http(s)?://(www\\.)?ourworldindata.org/")
+
+
+def extract_chart_references(
+    links: list[str],
+    kind: str,
+    post_id: int,
+    chart_slugs_to_ids: Dict[str, int],
+    cursor: sqlite3.Cursor,
+):
+    grapher_links = [
+        match.groupdict()["slug"]
+        for match in (grapherUrlRegex.match(link) for link in links)
+        if match is not None
+    ]
+    grapher_ids = {
+        chart_slugs_to_ids.get(slug)
+        for slug in grapher_links
+        if slug in chart_slugs_to_ids
+    }
+    unresolved_grapher_slugs = [
+        slug for slug in grapher_links if slug not in chart_slugs_to_ids
+    ]
+
+    if unresolved_grapher_slugs:
+        print(
+            f"[yellow]The following slugs could not be resolved for chart references of kind {kind}: {', '.join(unresolved_grapher_slugs)}"
+        )
+
+    params = [{"postId": post_id, "chartId": id, "kind": kind} for id in grapher_ids]
+    cursor.executemany(
+        """
+    INSERT INTO post_charts(postId, chartId, kind) VALUES (:postId, :chartId, :kind)
+    """,
+        params,
+    )
 
 
 def postprocess(args):
@@ -47,7 +83,8 @@ def postprocess(args):
             CREATE TABLE IF NOT EXISTS post_charts  (
                 `postId` integer NOT NULL,
                 `chartId` integer NOT NULL,
-                PRIMARY KEY (`postId`, `chartId`),
+                `kind` TEXT NOT NULL,
+                PRIMARY KEY (`postId`, `chartId`, `kind`),
                 CONSTRAINT `FK_post_charts_chartId` FOREIGN KEY (`chartId`) REFERENCES `charts` (`id`) ON DELETE CASCADE,
                 CONSTRAINT `FK_post_charts_postId` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
             ) ;
@@ -105,33 +142,18 @@ def postprocess(args):
                     params,
                 )
 
-                iframes = map(lambda iframe: iframe.get("src"), soup.find_all("iframe"))
-                grapher_links = [
-                    match.groupdict()["slug"]
-                    for match in (grapherUrlRegex.match(iframe) for iframe in iframes)
-                    if match is not None
-                ]
-                grapher_ids = {
-                    chart_slugs_to_ids.get(slug)
-                    for slug in grapher_links
-                    if slug in chart_slugs_to_ids
-                }
-                unresolved_grapher_slugs = [
-                    slug for slug in grapher_links if slug not in chart_slugs_to_ids
-                ]
-
-                if unresolved_grapher_slugs:
-                    print(
-                        f"[yellow]The following slugs could not be resolved: {', '.join(unresolved_grapher_slugs)}"
-                    )
-
-                params = [{"postId": row["id"], "chartId": id} for id in grapher_ids]
-                cursor.executemany(
-                    """
-                INSERT INTO post_charts(postId, chartId) VALUES (:postId, :chartId)
-                """,
-                    params,
+                iframe_links = map(
+                    lambda iframe: iframe.get("src"), soup.find_all("iframe")
                 )
+                extract_chart_references(
+                    iframe_links, "embed", row["id"], chart_slugs_to_ids, cursor
+                )
+
+                link_hrefs = map(lambda link: link.get("href"), soup.find_all("a"))
+                extract_chart_references(
+                    link_hrefs, "link", row["id"], chart_slugs_to_ids, cursor
+                )
+
             print("[green]All done")
             connection.commit()
 
