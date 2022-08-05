@@ -22,7 +22,7 @@ def extract_chart_references(
     cursor: sqlite3.Cursor,
 ):
     grapher_links = [
-        match.groupdict()["slug"]
+        match.groupdict()["slug"].lower()
         for match in (grapherUrlRegex.match(link) for link in links)
         if match is not None
     ]
@@ -64,7 +64,9 @@ def postprocess(args):
             SELECT id, JSON_EXTRACT(config, '$.slug') as slug FROM charts
             """
             )
-            chart_slugs_to_ids = {row["slug"]: row["id"] for row in grapher_rows}
+            chart_slugs_to_ids = {
+                row["slug"].lower(): row["id"] for row in grapher_rows
+            }
 
             print("Creating new link tables")
             cursor.execute(
