@@ -39,6 +39,21 @@ def extract_chart_references(
         print(
             f"[yellow]The following slugs could not be resolved for chart references in post {post['slug']} of kind {kind}: {', '.join(unresolved_grapher_slugs)}"
         )
+        params = [
+            {
+                "postId": post["id"],
+                "chartSlug": slug,
+                "kind": kind,
+            }
+            for slug in unresolved_grapher_slugs
+        ]
+        cursor.executemany(
+            """
+        INSERT INTO post_broken_chart_links(postId, chartSlug, kind)
+        VALUES (:postId, :chartSlug, :kind)
+        """,
+            params,
+        )
 
     params = [
         {
@@ -100,6 +115,18 @@ def postprocess(args):
                 `kind` TEXT NOT NULL,
                 `through_redirect` integer NOT NULL,
                 CONSTRAINT `FK_post_charts_chartId` FOREIGN KEY (`chartId`) REFERENCES `charts` (`id`) ON DELETE CASCADE,
+                CONSTRAINT `FK_post_charts_postId` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
+            ) ;
+            """
+            )
+
+            cursor.execute(
+                """
+            CREATE TABLE IF NOT EXISTS post_broken_chart_links (
+                `id` integer NOT NULL PRIMARY KEY,
+                `postId` integer NOT NULL,
+                `chartSlug` TEXT NOT NULL,
+                `kind` TEXT NOT NULL,
                 CONSTRAINT `FK_post_charts_postId` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
             ) ;
             """
