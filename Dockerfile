@@ -1,4 +1,4 @@
-FROM ubuntu:21.10
+FROM ubuntu:22.04
 
 # Version of Datasette to install, e.g. 0.55
 #   docker build . -t datasette --build-arg VERSION=0.55
