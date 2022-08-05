@@ -40,10 +40,19 @@ def extract_chart_references(
             f"[yellow]The following slugs could not be resolved for chart references of kind {kind}: {', '.join(unresolved_grapher_slugs)}"
         )
 
-    params = [{"postId": post_id, "chartId": id, "kind": kind} for id in grapher_ids]
+    params = [
+        {
+            "postId": post_id,
+            "chartId": id,
+            "kind": kind,
+            "through_redirect": is_redirect,
+        }
+        for (id, is_redirect) in grapher_ids
+    ]
     cursor.executemany(
         """
-    INSERT INTO post_charts(postId, chartId, kind) VALUES (:postId, :chartId, :kind)
+    INSERT INTO post_charts(postId, chartId, kind, through_redirect)
+    VALUES (:postId, :chartId, :kind, :through_redirect)
     """,
         params,
     )
@@ -59,13 +68,14 @@ def postprocess(args):
             print("Fetching redirects")
             grapher_rows = cursor.execute(
                 """
-            SELECT chart_id as id, slug FROM chart_slug_redirects
+            SELECT chart_id as id, slug, TRUE as is_redirect FROM chart_slug_redirects
             UNION
-            SELECT id, JSON_EXTRACT(config, '$.slug') as slug FROM charts
+            SELECT id, JSON_EXTRACT(config, '$.slug') as slug, FALSE as is_redirect FROM charts
             """
             )
             chart_slugs_to_ids = {
-                row["slug"].lower(): row["id"] for row in grapher_rows
+                row["slug"].lower(): (row["id"], bool(row["is_redirect"]))
+                for row in grapher_rows
             }
 
             print("Creating new link tables")
@@ -87,6 +97,7 @@ def postprocess(args):
                 `postId` integer NOT NULL,
                 `chartId` integer NOT NULL,
                 `kind` TEXT NOT NULL,
+                `through_redirect` integer NOT NULL,
                 PRIMARY KEY (`postId`, `chartId`, `kind`),
                 CONSTRAINT `FK_post_charts_chartId` FOREIGN KEY (`chartId`) REFERENCES `charts` (`id`) ON DELETE CASCADE,
                 CONSTRAINT `FK_post_charts_postId` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
