@@ -9,7 +9,7 @@ from rich import print
 from rich.progress import track
 
 grapherUrlRegex = re.compile(
-    "^http(s)?://(www\\.)?ourworldindata.org/grapher/(?P<slug>[^?]+)"
+    '^http(s)?://(www\\.)?ourworldindata.org/grapher/(?P<slug>[^? "]+)'
 )
 internalUrlRegex = re.compile("^http(s)?://(www\\.)?ourworldindata.org/")
 
@@ -22,7 +22,7 @@ def extract_chart_references(
     cursor: sqlite3.Cursor,
 ):
     grapher_links = [
-        match.groupdict()["slug"].lower()
+        match.groupdict()["slug"].lower().strip()
         for match in (grapherUrlRegex.match(link) for link in links)
         if match is not None
     ]
