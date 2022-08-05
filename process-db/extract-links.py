@@ -93,12 +93,12 @@ def postprocess(args):
 
             cursor.execute(
                 """
-            CREATE TABLE IF NOT EXISTS post_charts  (
+            CREATE TABLE IF NOT EXISTS post_charts (
+                `id` integer NOT NULL PRIMARY KEY,
                 `postId` integer NOT NULL,
                 `chartId` integer NOT NULL,
                 `kind` TEXT NOT NULL,
                 `through_redirect` integer NOT NULL,
-                PRIMARY KEY (`postId`, `chartId`, `kind`),
                 CONSTRAINT `FK_post_charts_chartId` FOREIGN KEY (`chartId`) REFERENCES `charts` (`id`) ON DELETE CASCADE,
                 CONSTRAINT `FK_post_charts_postId` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
             ) ;
