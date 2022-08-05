@@ -17,7 +17,7 @@ internalUrlRegex = re.compile("^http(s)?://(www\\.)?ourworldindata.org/")
 def extract_chart_references(
     links: list[str],
     kind: str,
-    post_id: int,
+    post: dict,
     chart_slugs_to_ids: Dict[str, int],
     cursor: sqlite3.Cursor,
 ):
@@ -37,12 +37,12 @@ def extract_chart_references(
 
     if unresolved_grapher_slugs:
         print(
-            f"[yellow]The following slugs could not be resolved for chart references of kind {kind}: {', '.join(unresolved_grapher_slugs)}"
+            f"[yellow]The following slugs could not be resolved for chart references in post {post['slug']} of kind {kind}: {', '.join(unresolved_grapher_slugs)}"
         )
 
     params = [
         {
-            "postId": post_id,
+            "postId": post["id"],
             "chartId": id,
             "kind": kind,
             "through_redirect": is_redirect,
@@ -105,7 +105,9 @@ def postprocess(args):
             """
             )
 
-            rows = cursor.execute("SELECT id, title, content from posts").fetchall()
+            rows = cursor.execute(
+                "SELECT id, slug, title, content from posts"
+            ).fetchall()
             for row in track(rows, description="Processing posts..."):
                 soup = BeautifulSoup(row["content"], "html.parser")
 
@@ -162,14 +164,14 @@ def postprocess(args):
                     if iframe.get("src")
                 ]
                 extract_chart_references(
-                    iframe_links, "embed", row["id"], chart_slugs_to_ids, cursor
+                    iframe_links, "embed", row, chart_slugs_to_ids, cursor
                 )
 
                 link_hrefs = [
                     link.get("href") for link in soup.find_all("a") if link.get("href")
                 ]
                 extract_chart_references(
-                    link_hrefs, "link", row["id"], chart_slugs_to_ids, cursor
+                    link_hrefs, "link", row, chart_slugs_to_ids, cursor
                 )
 
             print("[green]All done")
