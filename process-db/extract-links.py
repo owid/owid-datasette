@@ -1,11 +1,12 @@
+import re
 import sqlite3
 import sys
-from typing import Dict
-from bs4 import BeautifulSoup
 from contextlib import closing
+from typing import Dict
+
+from bs4 import BeautifulSoup
 from rich import print
 from rich.progress import track
-import re
 
 grapherUrlRegex = re.compile(
     "^http(s)?://(www\\.)?ourworldindata.org/grapher/(?P<slug>[^?]+)"
@@ -142,14 +143,18 @@ def postprocess(args):
                     params,
                 )
 
-                iframe_links = map(
-                    lambda iframe: iframe.get("src"), soup.find_all("iframe")
-                )
+                iframe_links = [
+                    iframe.get("src")
+                    for iframe in soup.find_all("iframe")
+                    if iframe.get("src")
+                ]
                 extract_chart_references(
                     iframe_links, "embed", row["id"], chart_slugs_to_ids, cursor
                 )
 
-                link_hrefs = map(lambda link: link.get("href"), soup.find_all("a"))
+                link_hrefs = [
+                    link.get("href") for link in soup.find_all("a") if link.get("href")
+                ]
                 extract_chart_references(
                     link_hrefs, "link", row["id"], chart_slugs_to_ids, cursor
                 )
