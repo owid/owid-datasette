@@ -1,8 +1,8 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.10
 
 # Version of Datasette to install, e.g. 0.55
 #   docker build . -t datasette --build-arg VERSION=0.55
-ARG VERSION=0.60
+ARG VERSION=0.62
 
 RUN apt-get update && \
     apt-get -y --no-install-recommends install wget python3 python3-pip libsqlite3-mod-spatialite lzma && \
