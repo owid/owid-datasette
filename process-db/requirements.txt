@@ -2,3 +2,4 @@ beautifulsoup4
 rich
 pymysql
 python-dotenv
+rure
