@@ -85,3 +85,12 @@ databases:
           This table contains a some summary statistics about the data values for most variables. For historical and performance
           reasons, creating this table is currently done at different intervals than the rest of the sqlite dump and so the very
           most recent variables may not be present in this statistics table.
+      post_html_tags:
+        description: |
+          This table extracts all html tags and their attributes from the posts table's content. This is useful for statistics for the backporting
+          wordpress to ArchieML project. Note that both opening and closing tags are listed here.
+      post_wp_tags:
+        description: |
+          This table extracts all special wordpress comment tags from the posts table's content. This is useful for statistics for the backporting
+          wordpress to ArchieML project. Note that both opening and closing tags are listed here so if you calculate counts etc you will want to
+          divide by two to get the correct number.
