@@ -204,6 +204,43 @@ def postprocess(args):
                 """
             )
 
+            print("Add views for database cleaning")
+
+            # Datasets uploaded/updated/edited more than 1 year ago, and with 0 chart
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW unused_old_datasets
+            AS 
+            SELECT name,
+                   printf("https://owid.cloud/admin/datasets/%d", id) as url
+            FROM datasets d
+            WHERE NOT EXISTS
+                (SELECT 1
+                FROM chart_variables cv
+                JOIN variables v ON cv.variableId = v.id
+                WHERE v.datasetId = d.id )
+            AND isArchived=0
+            AND createdAt <= date('now', '-1 year')
+            AND updatedAt <= date('now', '-1 year')
+            AND metadataEditedAt <= date('now', '-1 year')
+            AND dataEditedAt <= date('now', '-1 year')
+            AND description not like '%core-econ%';
+                """
+            )
+
+            # Charts with no topic page assigned
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_without_topic
+            AS 
+            SELECT title,
+                   printf("https://owid.cloud/admin/charts/%d/edit", id) AS url
+            FROM charts
+            WHERE trim(json_extract(config, "$.originUrl")) = ""
+            OR json_extract(config, "$.originUrl") IS NULL;
+                """
+            )
+
             connection.commit()
             print("done")
 
