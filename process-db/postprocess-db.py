@@ -246,19 +246,30 @@ def postprocess(args):
                 """-- sql
             CREATE VIEW charts_potential_duplicates
             AS
-            WITH chart_list AS
-                (SELECT chartId,
-                        group_concat(variableId) AS variables
-                FROM chart_variables
-                GROUP BY chartId)
-            SELECT a.chartId AS chartA,
-                b.chartId AS chartB,
-                a.variables
-            FROM chart_list a
-            JOIN chart_list b ON a.variables = b.variables
-            AND a.chartId < b.chartId;
-                """
-            )
+WITH chart_list AS (
+  SELECT
+    chartId,
+    group_concat(variableId) AS variables
+  FROM
+    chart_variables
+  GROUP BY
+    chartId
+), charts_per_variable AS (
+  SELECT
+    variables,
+    group_concat(chartId, '%29+%28%3D+charts.id+' ) as chart_ids
+  FROM
+    chart_list
+  GROUP BY
+    variables
+  HAVING
+    COUNT(*) > 1
+  ORDER BY
+    variables
+)
+select variables,
+  'https://owid.cloud/admin/bulk-grapher-config-editor?filter=%28OR+%28%3D+charts.id+' || chart_ids || '%29%29' as compare_link
+from charts_per_variable
 
             connection.commit()
             print("done")
