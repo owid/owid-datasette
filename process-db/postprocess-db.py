@@ -42,6 +42,7 @@ def regexp_match(pattern, input, index=1):
 def regexp_matches(pattern, input):
     return json.dumps([m.groupdict() for m in compiled_regex(pattern).finditer(input)])
 
+
 def postprocess(args):
     if len(args) != 1:
         print("Usage: postprocess-db.py DBNAME")
@@ -56,13 +57,16 @@ def postprocess(args):
             cursor.execute("UPDATE users set password=''")
 
             print("Mask out email addresses of non-owid emails")
-            cursor.execute("UPDATE users SET email=((replace(fullName, ' ', '.') || '@former-contributor.org')) WHERE email NOT LIKE '%ourworldindata.org'")
+            cursor.execute(
+                "UPDATE users SET email=((replace(fullName, ' ', '.') || '@former-contributor.org')) WHERE email NOT LIKE '%ourworldindata.org'"
+            )
 
             print("Remove all posts that are not published (draft, private)")
             cursor.execute("DELETE FROM posts WHERE status!='publish'")
 
             print("Create relationship table charts_variables")
-            cursor.execute("""-- sql
+            cursor.execute(
+                """-- sql
             CREATE table chart_variables
             (
                 `chartId` integer NOT NULL,
@@ -70,9 +74,11 @@ def postprocess(args):
                 PRIMARY KEY (`chartId`, `variableId`),
                 CONSTRAINT `FK_chart_variables_chartId` FOREIGN KEY (`chartId`) REFERENCES `charts` (`id`) ON DELETE CASCADE,
                 CONSTRAINT `FK_chart_variables_variableId` FOREIGN KEY (`variableId`) REFERENCES `variables` (`id`) ON DELETE CASCADE
-            );""")
+            );"""
+            )
 
-            cursor.execute("""-- sql
+            cursor.execute(
+                """-- sql
             INSERT INTO chart_variables
 
             -- get the map variables that are not null
@@ -90,11 +96,12 @@ def postprocess(args):
                 JSON_EXTRACT(dimension.value, '$.variableId') as variableId
             from charts,
             json_each(config, '$.dimensions') as dimension;
-            """)
-
+            """
+            )
 
             print("Create helper table post_html_tags")
-            cursor.execute("""-- sql
+            cursor.execute(
+                """-- sql
             CREATE table post_html_tags
             (
                 `id` integer PRIMARY KEY,
@@ -102,9 +109,11 @@ def postprocess(args):
                 `tag` TEXT NOT NULL,
                 'attribute' TEXT NOT NULL,
                 CONSTRAINT `FK_post_html_tags_post_id` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
-            );""")
+            );"""
+            )
 
-            cursor.execute("""-- sql
+            cursor.execute(
+                """-- sql
                 with posts_with_tags as (
                     select
                         id,
@@ -127,19 +136,23 @@ def postprocess(args):
                     attribute
                 from
                     id_and_tag
-            """)
+            """
+            )
 
             print("Create helper table post_wp_tags")
-            cursor.execute("""-- sql
+            cursor.execute(
+                """-- sql
             CREATE table post_wp_tags
             (
                 `id` integer PRIMARY KEY,
                 `postId` integer NOT NULL,
                 `tag` TEXT NOT NULL,
                 CONSTRAINT `FK_post_wp_tags_post_id` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
-            );""")
+            );"""
+            )
 
-            cursor.execute("""-- sql
+            cursor.execute(
+                """-- sql
                 with posts_with_tags as (
                     select
                         id,
@@ -160,10 +173,12 @@ def postprocess(args):
                     tag
                 from
                     id_and_tag
-            """)
+            """
+            )
 
             print("Add useful columns to charts")
-            cursor.executescript("""-- sql
+            cursor.executescript(
+                """-- sql
             ALTER TABLE charts
                 ADD COLUMN title TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.title'))  VIRTUAL;
             ALTER TABLE charts
@@ -174,21 +189,91 @@ def postprocess(args):
                 ADD COLUMN slug TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.slug'))  VIRTUAL;
             ALTER TABLE charts
                 ADD COLUMN type TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.type'))  VIRTUAL;
-                """)
+                """
+            )
 
             print("Add useful columns to sources")
-            cursor.executescript("""-- sql
+            cursor.executescript(
+                """-- sql
             ALTER TABLE sources
                 ADD COLUMN additionalInfo TEXT GENERATED ALWAYS as (JSON_EXTRACT(description, '$.additionalInfo')) VIRTUAL;
             ALTER TABLE sources
                 ADD COLUMN link TEXT GENERATED ALWAYS as (JSON_EXTRACT(description, '$.link')) VIRTUAL;
             ALTER TABLE sources
                 ADD COLUMN dataPublishedBy TEXT GENERATED ALWAYS as (JSON_EXTRACT(description, '$.dataPublishedBy')) VIRTUAL;
-                """)
+                """
+            )
+
+            print("Add views for database cleaning")
+
+            # Datasets uploaded/updated/edited more than 1 year ago, and with 0 chart
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW unused_old_datasets
+            AS 
+            SELECT name,
+                   printf("https://owid.cloud/admin/datasets/%d", id) as url
+            FROM datasets d
+            WHERE NOT EXISTS
+                (SELECT 1
+                FROM chart_variables cv
+                JOIN variables v ON cv.variableId = v.id
+                WHERE v.datasetId = d.id )
+            AND isArchived=0
+            AND createdAt <= date('now', '-1 year')
+            AND updatedAt <= date('now', '-1 year')
+            AND metadataEditedAt <= date('now', '-1 year')
+            AND dataEditedAt <= date('now', '-1 year')
+            AND description not like '%core-econ%';
+                """
+            )
+
+            # Charts with no topic page assigned
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_without_topic
+            AS 
+            SELECT title,
+                   printf("https://owid.cloud/admin/charts/%d/edit", id) AS url
+            FROM charts
+            WHERE trim(config ->> "$.originUrl") = ""
+            OR config ->> "$.originUrl" IS NULL;
+                """
+            )
+
+            # Charts that are potential duplicates
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_potential_duplicates
+            AS
+WITH chart_list AS (
+  SELECT
+    chartId,
+    group_concat(variableId) AS variables
+  FROM
+    chart_variables
+  GROUP BY
+    chartId
+), charts_per_variable AS (
+  SELECT
+    variables,
+    group_concat(chartId, '%29+%28%3D+charts.id+' ) as chart_ids
+  FROM
+    chart_list
+  GROUP BY
+    variables
+  HAVING
+    COUNT(*) > 1
+  ORDER BY
+    variables
+)
+select variables,
+  'https://owid.cloud/admin/bulk-grapher-config-editor?filter=%28OR+%28%3D+charts.id+' || chart_ids || '%29%29' as compare_link
+from charts_per_variable
 
             connection.commit()
             print("done")
 
 
 if __name__ == "__main__":
-   postprocess(sys.argv[1:])
+    postprocess(sys.argv[1:])
