@@ -267,8 +267,9 @@ def postprocess(args):
             ORDER BY
                 variables
             )
-            select variables,
-            'https://owid.cloud/admin/bulk-grapher-config-editor?filter=%28OR+%28%3D+charts.id+' || chart_ids || '%29%29' as compare_link
+            select
+            'https://owid.cloud/admin/bulk-grapher-config-editor?filter=%28OR+%28%3D+charts.id+' || chart_ids || '%29%29' as compare_link,
+            variables
             from charts_per_variable
                 """
             )
