@@ -94,3 +94,9 @@ databases:
           This table extracts all special wordpress comment tags from the posts table's content. This is useful for statistics for the backporting
           wordpress to ArchieML project. Note that both opening and closing tags are listed here so if you calculate counts etc you will want to
           divide by two to get the correct number.
+      unused_old_datasets:
+        description:
+      charts_without_topic:
+        description:
+      charts_potential_duplicates:
+        description:
