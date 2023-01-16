@@ -236,8 +236,8 @@ def postprocess(args):
             SELECT title,
                    printf("https://owid.cloud/admin/charts/%d/edit", id) AS url
             FROM charts
-            WHERE trim(config ->> "$.originUrl") = ""
-            OR config ->> "$.originUrl" IS NULL;
+            WHERE trim(json_extract(config, "$.originUrl")) = ""
+            OR json_extract(config, "$.originUrl") IS NULL;
                 """
             )
 
