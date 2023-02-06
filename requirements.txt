@@ -2,3 +2,4 @@ datasette-vega
 datasette-jupyterlite
 datasette-pretty-json
 datasette-rure
+datasette-hovercards
