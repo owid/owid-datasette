@@ -274,6 +274,50 @@ def postprocess(args):
                 """
             )
 
+            # Charts where the originUrl doesn't link to an existing post
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_broken_origin_url
+            AS
+            WITH chartOriginUrl AS (
+            SELECT
+                id AS chartId,
+                slug AS chartSlug,
+                "https://owid.cloud/admin/charts/" || id || "/edit" AS chartEditLink,
+                config ->> "$.originUrl" AS originUrlAsAuthored,
+                trim(
+                    regexp_match(
+                        '^.*[Oo]ur[Ww]orld[Ii]n[Dd]ata.org/(.+)$',
+                        config ->> "$.originUrl"
+                    ),
+                    '/'
+                ) AS originUrlPostSlug
+            FROM
+                charts
+            WHERE
+                originUrlAsAuthored IS NOT NULL
+                AND originUrlAsAuthored IS NOT ""
+                AND originUrlAsAuthored not like "%tinyco.re%"
+            )
+            SELECT
+            c.chartId,
+            c.chartSlug,
+            c.chartEditLink,
+            c.originUrlAsAuthored,
+            c.originUrlPostSlug,
+            CASE
+                WHEN c.originUrlPostSlug IS NOT NULL
+                THEN "https://ourworldindata.org/" || c.originUrlPostSlug
+                ELSE NULL
+            END AS originUrlPostLink
+            FROM
+            chartOriginUrl c
+            LEFT JOIN posts p ON p.slug = c.originUrlPostSlug
+            WHERE
+            p.id IS NULL
+                """
+            )
+
             connection.commit()
             print("done")
 

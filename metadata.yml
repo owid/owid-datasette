@@ -100,3 +100,8 @@ databases:
         description:
       charts_potential_duplicates:
         description:
+      charts_broken_origin_url:
+        description: |
+          Charts where there's an origin URL set, but no post exists for that URL.
+          Sometimes this just means that a redirect has been set up in the meantime, and so the link still works for the user.
+          However, in this case we still display the outdated post URL with the chart - and, crucially, there will not be any "related charts" presented to the user, since these are based on the origin URL and don't take redirects into account.
