@@ -284,11 +284,11 @@ def postprocess(args):
                 id AS chartId,
                 slug AS chartSlug,
                 "https://owid.cloud/admin/charts/" || id || "/edit" AS chartEditLink,
-                config ->> "$.originUrl" AS originUrlAsAuthored,
+                JSON_EXTRACT(config, "$.originUrl") AS originUrlAsAuthored,
                 trim(
                     regexp_match(
                         '^.*[Oo]ur[Ww]orld[Ii]n[Dd]ata.org/(.+)$',
-                        config ->> "$.originUrl"
+                        JSON_EXTRACT(config, "$.originUrl")
                     ),
                     '/'
                 ) AS originUrlPostSlug
