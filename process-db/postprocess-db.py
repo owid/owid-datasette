@@ -233,12 +233,25 @@ def postprocess(args):
                 """-- sql
             CREATE VIEW charts_without_topic
             AS 
-            SELECT title,
-                   printf("https://owid.cloud/admin/charts/%d/edit", id) AS url
-            FROM charts
-            WHERE (trim(json_extract(config, "$.originUrl")) = ""
-            OR json_extract(config, "$.originUrl") IS NULL)
-            AND json_extract(config, "$.isPublished");
+            select
+                title,
+                group_concat(t.name) as tags,
+                printf("https://owid.cloud/admin/charts/%d/edit", c.id) AS url
+            from
+                charts c
+                left join chart_tags ct on c.id = ct.chartId
+                left join tags t on ct.tagId = t.id
+            where
+                (
+                    trim(json_extract(config, "$.originUrl")) = ""
+                    OR json_extract(config, "$.originUrl") IS NULL
+                )
+                and json_extract(config, "$.isPublished") = True
+            group by
+                c.title
+            order by
+                2,
+                1
                 """
             )
 
