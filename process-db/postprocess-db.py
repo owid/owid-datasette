@@ -231,7 +231,7 @@ def postprocess(args):
             # Charts with no topic page assigned
             cursor.executescript(
                 """-- sql
-            CREATE VIEW charts_without_topic
+            CREATE VIEW charts_without_origin_url
             AS 
             select
                 title,
