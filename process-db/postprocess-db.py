@@ -337,7 +337,6 @@ def postprocess(args):
                 """-- sql
             CREATE VIEW charts_by_dataset
             AS
-            WITH chartOriginUrl AS (
             select
                 d.id,
                 d.name,
@@ -361,7 +360,6 @@ def postprocess(args):
                 """-- sql
             CREATE VIEW charts_with_manual_year
             AS
-            WITH chartOriginUrl AS (
             select
                 id,
                 title
