@@ -332,6 +332,30 @@ def postprocess(args):
                 """
             )
 
+            # Number of live charts per dataset
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_by_dataset
+            AS
+            WITH chartOriginUrl AS (
+            select
+                d.id,
+                d.name,
+                count(distinct chartId) as n_charts
+            from
+                datasets d
+                join variables v on v.datasetId = d.id
+                join chart_variables cv on cv.variableId = v.id
+                join charts c on cv.chartId = c.id
+            where json_extract(c.config, "$.isPublished")
+            group by
+                d.id,
+                d.name
+            order by
+                n_charts desc
+                """
+            )
+
             connection.commit()
             print("done")
 
