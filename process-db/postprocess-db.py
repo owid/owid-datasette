@@ -371,6 +371,39 @@ def postprocess(args):
                 """
             )
 
+            # Charts without any tag
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_without_tag
+            AS
+            select
+                id,
+                title,
+                "https://owid.cloud/admin/variables/" || variableId as edit_url
+            from
+                charts c
+                join (
+                    select
+                    chartId,
+                    max(variableId) as variableId
+                from
+                    chart_variables
+                    group by
+                    chartId
+                ) cv on c.id = cv.chartId
+            where
+                id not in (
+                    select
+                        chartId
+                    from
+                        chart_tags
+                )
+                and json_extract(config, "$.isPublished")
+            order by
+            id
+                """
+            )
+
             connection.commit()
             print("done")
 
