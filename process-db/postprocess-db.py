@@ -356,6 +356,23 @@ def postprocess(args):
                 """
             )
 
+            # Charts & maps set to a manual year
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_with_manual_year
+            AS
+            WITH chartOriginUrl AS (
+            select
+                id,
+                title
+            from
+                charts
+            where
+                json_extract(config, "$.maxTime") is not null
+                and json_extract(config, "$.maxTime") != "latest"
+                """
+            )
+
             connection.commit()
             print("done")
 
