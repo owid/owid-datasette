@@ -362,7 +362,8 @@ def postprocess(args):
             AS
             select
                 id,
-                title
+                title,
+                printf("https://owid.cloud/admin/charts/%s/edit", id) as edit_url
             from
                 charts
             where
