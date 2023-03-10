@@ -14,6 +14,40 @@ grapherUrlRegex = re.compile(
 internalUrlRegex = re.compile("^http(s)?://(www\\.)?ourworldindata.org/")
 
 
+def process_links(
+    links: list[str],
+    kind: str,
+    post: dict,
+    chart_slugs_to_ids: Dict[str, int],
+    cursor: sqlite3.Cursor,
+):
+    internal_links = [link for link in links if internalUrlRegex.match(link)]
+    params = [
+        {"postId": post["id"], "link": link, "kind": f"internal-{kind}"}
+        for link in internal_links
+    ]
+    cursor.executemany(
+        """
+    INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
+    """,
+        params,
+    )
+
+    external_links = [link for link in links if internalUrlRegex.match(link) is None]
+    params = [
+        {"postId": post["id"], "link": link, "kind": f"external-{kind}"}
+        for link in external_links
+    ]
+    cursor.executemany(
+        """
+    INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
+    """,
+        params,
+    )
+
+    extract_chart_references(links, kind, post, chart_slugs_to_ids, cursor)
+
+
 def extract_chart_references(
     links: list[str],
     kind: str,
@@ -145,35 +179,7 @@ def postprocess(args):
                         map(lambda link: link.get("href"), soup.find_all("a")),
                     )
                 )
-                internal_links = [
-                    link for link in links if internalUrlRegex.match(link)
-                ]
-                params = [
-                    {"postId": row["id"], "link": link, "kind": "internal-link"}
-                    for link in internal_links
-                ]
-                cursor.executemany(
-                    """
-                INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
-                """,
-                    params,
-                )
-
-                external_links = [
-                    link for link in links if internalUrlRegex.match(link) is None
-                ]
-                params = [
-                    {"postId": row["id"], "link": link, "kind": "external-link"}
-                    for link in external_links
-                ]
-                cursor.executemany(
-                    """
-                INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
-                """,
-                    params,
-                )
-
-                extract_chart_references(links, "link", row, chart_slugs_to_ids, cursor)
+                process_links(links, "link", row, chart_slugs_to_ids, cursor)
 
                 # Extract images, i.e. <img> tags
                 images = map(lambda img: img.get("src"), soup.find_all("img"))
