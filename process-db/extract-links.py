@@ -138,6 +138,7 @@ def postprocess(args):
             for row in track(rows, description="Processing posts..."):
                 soup = BeautifulSoup(row["content"], "html.parser")
 
+                # Extract normal links, i.e. simple <a> tags
                 links = list(
                     filter(
                         lambda link: link is not None,
@@ -172,6 +173,9 @@ def postprocess(args):
                     params,
                 )
 
+                extract_chart_references(links, "link", row, chart_slugs_to_ids, cursor)
+
+                # Extract images, i.e. <img> tags
                 images = map(lambda img: img.get("src"), soup.find_all("img"))
                 params = [
                     {"postId": row["id"], "link": image, "kind": "image"}
@@ -185,6 +189,7 @@ def postprocess(args):
                     params,
                 )
 
+                # Extract iframes, i.e. embedded graphers
                 iframe_links = [
                     iframe.get("src")
                     for iframe in soup.find_all("iframe")
@@ -192,13 +197,6 @@ def postprocess(args):
                 ]
                 extract_chart_references(
                     iframe_links, "embed", row, chart_slugs_to_ids, cursor
-                )
-
-                link_hrefs = [
-                    link.get("href") for link in soup.find_all("a") if link.get("href")
-                ]
-                extract_chart_references(
-                    link_hrefs, "link", row, chart_slugs_to_ids, cursor
                 )
 
             print("[green]All done")
