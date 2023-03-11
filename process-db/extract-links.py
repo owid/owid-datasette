@@ -1,10 +1,11 @@
+import json
 import re
 import sqlite3
 import sys
 from contextlib import closing
 from typing import Dict
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from rich import print
 from rich.progress import track
 
@@ -12,6 +13,41 @@ grapherUrlRegex = re.compile(
     '^http(s)?://(www\\.)?ourworldindata.org/grapher/(?P<slug>[^? "]+)'
 )
 internalUrlRegex = re.compile("^http(s)?://(www\\.)?ourworldindata.org/")
+findJsonRegex = re.compile("{.*}")
+
+
+def process_links(
+    links: list[str],
+    kind: str,
+    post: dict,
+    chart_slugs_to_ids: Dict[str, int],
+    cursor: sqlite3.Cursor,
+):
+    internal_links = [link for link in links if internalUrlRegex.match(link)]
+    params = [
+        {"postId": post["id"], "link": link, "kind": f"internal-{kind}"}
+        for link in internal_links
+    ]
+    cursor.executemany(
+        """
+    INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
+    """,
+        params,
+    )
+
+    external_links = [link for link in links if internalUrlRegex.match(link) is None]
+    params = [
+        {"postId": post["id"], "link": link, "kind": f"external-{kind}"}
+        for link in external_links
+    ]
+    cursor.executemany(
+        """
+    INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
+    """,
+        params,
+    )
+
+    extract_chart_references(links, kind, post, chart_slugs_to_ids, cursor)
 
 
 def extract_chart_references(
@@ -138,40 +174,52 @@ def postprocess(args):
             for row in track(rows, description="Processing posts..."):
                 soup = BeautifulSoup(row["content"], "html.parser")
 
+                # Extract normal links, i.e. simple <a> tags
                 links = list(
                     filter(
                         lambda link: link is not None,
                         map(lambda link: link.get("href"), soup.find_all("a")),
                     )
                 )
-                internal_links = [
-                    link for link in links if internalUrlRegex.match(link)
+                process_links(links, "link", row, chart_slugs_to_ids, cursor)
+
+                # Extract prominent links, which are WP blocks
+                # A WP prominent link block is a comment, and looks like this:
+                # <!-- wp:owid/prominent-link {"linkUrl":"https://ourworldindata.org/grapher/population","className":"is-style-thin"} /-->
+                wp_prominent_link_blocks = [
+                    comment.string
+                    for comment in soup.findAll(
+                        string=lambda text: isinstance(text, Comment)
+                    )
+                    if comment.string.strip().startswith("wp:owid/prominent-link")
                 ]
-                params = [
-                    {"postId": row["id"], "link": link, "kind": "internal-link"}
-                    for link in internal_links
-                ]
-                cursor.executemany(
-                    """
-                INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
-                """,
-                    params,
+                prominent_links = []
+                for block in wp_prominent_link_blocks:
+                    match = findJsonRegex.search(block)
+                    if match:
+                        json_str = match.group(0)
+                        try:
+                            json_obj = json.loads(json_str)
+                            if json_obj.get("linkUrl"):
+                                prominent_links.append(json_obj.get("linkUrl"))
+                            else:
+                                print(
+                                    "Could not find linkUrl in prominent link JSON",
+                                    json_str,
+                                    file=sys.stderr,
+                                )
+                        except Exception as e:
+                            print(
+                                "Could not parse prominent link JSON",
+                                json_str,
+                                e,
+                                file=sys.stderr,
+                            )
+                process_links(
+                    prominent_links, "prominent-link", row, chart_slugs_to_ids, cursor
                 )
 
-                external_links = [
-                    link for link in links if internalUrlRegex.match(link) is None
-                ]
-                params = [
-                    {"postId": row["id"], "link": link, "kind": "external-link"}
-                    for link in external_links
-                ]
-                cursor.executemany(
-                    """
-                INSERT INTO post_links(postId, link, kind) VALUES (:postId, :link, :kind)
-                """,
-                    params,
-                )
-
+                # Extract images, i.e. <img> tags
                 images = map(lambda img: img.get("src"), soup.find_all("img"))
                 params = [
                     {"postId": row["id"], "link": image, "kind": "image"}
@@ -185,6 +233,7 @@ def postprocess(args):
                     params,
                 )
 
+                # Extract iframes, i.e. embedded graphers
                 iframe_links = [
                     iframe.get("src")
                     for iframe in soup.find_all("iframe")
@@ -192,13 +241,6 @@ def postprocess(args):
                 ]
                 extract_chart_references(
                     iframe_links, "embed", row, chart_slugs_to_ids, cursor
-                )
-
-                link_hrefs = [
-                    link.get("href") for link in soup.find_all("a") if link.get("href")
-                ]
-                extract_chart_references(
-                    link_hrefs, "link", row, chart_slugs_to_ids, cursor
                 )
 
             print("[green]All done")
