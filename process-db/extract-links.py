@@ -119,9 +119,11 @@ def postprocess(args):
             print("Fetching redirects")
             grapher_rows = cursor.execute(
                 """
-            SELECT chart_id as id, slug, TRUE as is_redirect FROM chart_slug_redirects
+                SELECT chart_id as id, slug, TRUE as is_redirect FROM chart_slug_redirects
             UNION
-            SELECT id, JSON_EXTRACT(config, '$.slug') as slug, FALSE as is_redirect FROM charts
+                SELECT id, JSON_EXTRACT(config, '$.slug') as slug, FALSE as is_redirect
+                FROM charts
+                WHERE JSON_EXTRACT(config, '$.isPublished') = true
             """
             )
             chart_slugs_to_ids = {
