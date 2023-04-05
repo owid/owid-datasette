@@ -405,6 +405,35 @@ def postprocess(args):
                 """
             )
 
+            # Charts with an identical title, variant included
+            cursor.executescript(
+                """-- sql
+            CREATE VIEW charts_same_title_variant
+            AS
+            with full_titles as (
+            select
+                printf(
+                "%s (%s)",
+                title,
+                json_extract(config, "$.variantName")
+                ) as full_title,
+                id
+            from
+                charts
+            where
+                json_extract(config, "$.isPublished")
+            )
+            select
+            a.full_title,
+            printf("https://owid.cloud/admin/charts/%s/edit", a.id) as chartA,
+            printf("https://owid.cloud/admin/charts/%s/edit", b.id) as chartB
+            from
+            full_titles a
+            join full_titles b on a.full_title = b.full_title
+            and a.id < b.id
+                """
+            )
+
             connection.commit()
             print("done")
 
