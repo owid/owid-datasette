@@ -431,6 +431,7 @@ def postprocess(args):
             full_titles a
             join full_titles b on a.full_title = b.full_title
             and a.id < b.id
+            order by 1
                 """
             )
 
