@@ -3,3 +3,4 @@ rich
 pymysql
 python-dotenv
 rure
+sqlite-utils
