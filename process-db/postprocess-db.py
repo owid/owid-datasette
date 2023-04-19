@@ -335,7 +335,7 @@ def postprocess(args):
             # Number of live charts per dataset
             cursor.executescript(
                 """-- sql
-            CREATE VIEW charts_by_dataset
+            CREATE VIEW charts_per_dataset
             AS
             select
                 d.id,
