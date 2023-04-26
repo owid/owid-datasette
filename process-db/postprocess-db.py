@@ -71,10 +71,10 @@ def postprocess(args):
                 cursor.execute("DELETE FROM posts WHERE status!='publish'")
 
                 print("Remove all posts_gdocs that are not published")
-                cursor.execute("DELETE FROM posts WHERE published=0")
+                cursor.execute("DELETE FROM posts_gdocs WHERE published=0")
 
                 print("Dropping confidential table pageviews")
-                cursor.execute("DROP TABLE pageviews")
+                cursor.execute("DROP TABLE IF EXISTS pageviews")
 
             print("Create relationship table charts_variables")
             cursor.execute(

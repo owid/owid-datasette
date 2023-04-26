@@ -28,6 +28,8 @@ mysqldump --skip-extended-insert --no-tablespaces --column-statistics=0 --compac
     pageviews \
     images \
     posts_gdocs_x_images \
+    posts_gdocs_links \
+    posts_gdocs_x_tags \
   | ./mysql2sqlite - \
   | sqlite3 owid.db
 # Run the postprocess-db python script. This is the place to censor some rows or add views etc
