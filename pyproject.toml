@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "owid-datasette"
+version = "0.1.0"
+description = ""
+authors = ["Daniel Bachler <daniel@danielbachler.de>"]
+readme = "README.md"
+packages = [{include = "owid_datasette"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+rich = "^13.3.4"
+beautifulsoup4 = "^4.12.2"
+pymysql = "^1.0.3"
+python-dotenv = "^1.0.0"
+rure = "^0.2.2"
+datasette = "^0.64.3"
+datasette-vega = "^0.6.2"
+datasette-pretty-json = "^0.2.2"
+datasette-rure = "^0.3"
+datasette-hovercards = "^0.1a0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+pylint = "^2.17.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
