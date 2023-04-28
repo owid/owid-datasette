@@ -8,6 +8,11 @@ rm owid.db || true
 rm owid-public.db || true
 rm owid-private.db || true
 rm owid.db.gz || true
+
+set -o allexport
+source .env set
+set +o allexport
+
 # Run mysqldump with a subset of tables and some flags to bring it into the required format, the
 # pipe this into mysql2sqlite and pipe this into sqlite3 to created owid.db
 mysqldump --skip-extended-insert --no-tablespaces --column-statistics=0 --compact --port \
@@ -43,4 +48,4 @@ python process-db/extract-links.py owid-private.db
 # Gzip the file
 gzip -9 -c owid-public.db > owid.db.gz
 # And upload to s3
-s3cmd put -P owid.db.gz s3://owid-public
+# s3cmd put -P owid.db.gz s3://owid-public
