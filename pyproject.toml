@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Daniel Bachler <daniel@danielbachler.de>"]
 readme = "README.md"
-packages = [{include = "owid_datasette"}]
+packages = []
 
 [tool.poetry.dependencies]
 python = "^3.10"
