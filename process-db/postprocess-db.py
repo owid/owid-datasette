@@ -7,6 +7,8 @@ import threading
 import json
 import rure
 
+KEEP_CONFIDENTIAL_DATA = "keep-confidential-data"
+
 # Below taken from datasette-rure so we can use sqlite regexes when building our sqlite file
 @functools.lru_cache(maxsize=128)
 def _compiled_regex(threadid, pattern):
@@ -44,25 +46,35 @@ def regexp_matches(pattern, input):
 
 
 def postprocess(args):
-    if len(args) != 1:
-        print("Usage: postprocess-db.py DBNAME")
+    if len(args) < 1 or len(args) > 2 or (len(args) == 2 and args[1] != f"--{KEEP_CONFIDENTIAL_DATA}" ):
+        print(f"Usage: postprocess-db.py DBNAME [--{KEEP_CONFIDENTIAL_DATA}]")
         return
+    keep_confidential_data = len(args) == 2 and args[1] == f"--{KEEP_CONFIDENTIAL_DATA}"
+    if keep_confidential_data:
+        print("WARNING: --keep-confidential-data flag given, data dump will not be cleaned of private data")
     with closing(sqlite3.connect(args[0])) as connection:
         connection.create_function("regexp", 2, regexp)
         connection.create_function("regexp_match", 2, regexp_match)
         connection.create_function("regexp_match", 3, regexp_match)
         connection.create_function("regexp_matches", 2, regexp_matches)
         with closing(connection.cursor()) as cursor:
-            print("Ensuring no passwords are published")
-            cursor.execute("UPDATE users set password=''")
+            if not keep_confidential_data:
+                print("Ensuring no passwords are published")
+                cursor.execute("UPDATE users set password=''")
 
-            print("Mask out email addresses of non-owid emails")
-            cursor.execute(
-                "UPDATE users SET email=((replace(fullName, ' ', '.') || '@former-contributor.org')) WHERE email NOT LIKE '%ourworldindata.org'"
-            )
+                print("Mask out email addresses of non-owid emails")
+                cursor.execute(
+                    "UPDATE users SET email=((replace(fullName, ' ', '.') || '@former-contributor.org')) WHERE email NOT LIKE '%ourworldindata.org'"
+                )
 
-            print("Remove all posts that are not published (draft, private)")
-            cursor.execute("DELETE FROM posts WHERE status!='publish'")
+                print("Remove all posts that are not published (draft, private)")
+                cursor.execute("DELETE FROM posts WHERE status!='publish'")
+
+                print("Remove all posts_gdocs that are not published")
+                cursor.execute("DELETE FROM posts_gdocs WHERE published=0")
+
+                print("Dropping confidential table pageviews")
+                cursor.execute("DROP TABLE IF EXISTS pageviews")
 
             print("Create relationship table charts_variables")
             cursor.execute(
@@ -96,83 +108,6 @@ def postprocess(args):
                 JSON_EXTRACT(dimension.value, '$.variableId') as variableId
             from charts,
             json_each(config, '$.dimensions') as dimension;
-            """
-            )
-
-            print("Create helper table post_html_tags")
-            cursor.execute(
-                """-- sql
-            CREATE table post_html_tags
-            (
-                `id` integer PRIMARY KEY,
-                `postId` integer NOT NULL,
-                `tag` TEXT NOT NULL,
-                'attribute' TEXT NOT NULL,
-                CONSTRAINT `FK_post_html_tags_post_id` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
-            );"""
-            )
-
-            cursor.execute(
-                """-- sql
-                with posts_with_tags as (
-                    select
-                        id,
-                        regexp_matches('<(?P<tag>[^!>\\s]+)(?P<attributes>[^>]*)>', content) as tags
-                    from
-                        posts
-                ), id_and_tag as (
-                    select
-                        posts_with_tags.id as id,
-                        JSON_EXTRACT(json_each.value, '$.tag') as tag,
-                        JSON_EXTRACT(json_each.value, '$.attributes') as attribute
-                    from
-                        posts_with_tags,
-                        json_each(posts_with_tags.tags)
-                )
-                INSERT INTO post_html_tags (postId, tag, attribute)
-                select
-                    id as postId,
-                    tag,
-                    attribute
-                from
-                    id_and_tag
-            """
-            )
-
-            print("Create helper table post_wp_tags")
-            cursor.execute(
-                """-- sql
-            CREATE table post_wp_tags
-            (
-                `id` integer PRIMARY KEY,
-                `postId` integer NOT NULL,
-                `tag` TEXT NOT NULL,
-                CONSTRAINT `FK_post_wp_tags_post_id` FOREIGN KEY (`postId`) REFERENCES `posts` (`id`) ON DELETE CASCADE
-            );"""
-            )
-
-            cursor.execute(
-                """-- sql
-                with posts_with_tags as (
-                    select
-                        id,
-                        regexp_matches('(?P<tag>wp:[^\\s]+)(?P<dummy>[\\s])', content) as tags
-                    from
-                        posts
-                ), id_and_tag as (
-                    select
-                        posts_with_tags.id as id,
-                        JSON_EXTRACT(json_each.value, '$.tag') as tag
-                    from
-                        posts_with_tags,
-                        json_each(posts_with_tags.tags)
-                )
-                INSERT INTO post_wp_tags (postId, tag)
-                select
-                    id as postId,
-                    tag
-                from
-                    id_and_tag
             """
             )
 
@@ -210,7 +145,7 @@ def postprocess(args):
             cursor.executescript(
                 """-- sql
             CREATE VIEW unused_old_datasets
-            AS 
+            AS
             SELECT name,
                    printf("https://owid.cloud/admin/datasets/%d", id) as url
             FROM datasets d
@@ -232,7 +167,7 @@ def postprocess(args):
             cursor.executescript(
                 """-- sql
             CREATE VIEW charts_without_origin_url
-            AS 
+            AS
             select
                 title,
                 group_concat(t.name) as tags,
