@@ -19,6 +19,7 @@ mysqldump --skip-extended-insert --no-tablespaces --column-statistics=0 --compac
     $DB_PORT --password=$DB_PASSWD --user $DB_USER --host $DB_HOST $DB_NAME \
     users \
     variables \
+    entities \
     tags \
     sources \
     posts \
