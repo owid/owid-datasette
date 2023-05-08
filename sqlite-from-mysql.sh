@@ -31,7 +31,6 @@ mysqldump --skip-extended-insert --no-tablespaces --column-statistics=0 --compac
     chart_tags \
     chart_slug_redirects \
     chart_dimensions \
-    details \
     posts_gdocs \
     pageviews \
     images \
