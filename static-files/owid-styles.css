@@ -1,4 +1,4 @@
-.owid-copy-button {
+.owid-button {
   position: relative;
   margin-left: 5px;
   font-size: 0.7em;
@@ -11,4 +11,8 @@
 
 table.rows-and-columns td {
   max-width: 60vw;
+}
+
+table td pre {
+  white-space: pre-wrap;
 }
