@@ -1,0 +1,14 @@
+.owid-copy-button {
+  position: relative;
+  margin-left: 5px;
+  font-size: 0.7em;
+  background-color: #fff;
+  color: #666;
+  border: 1px solid #eee;
+  cursor: pointer;
+  float: right;
+}
+
+table.rows-and-columns td {
+  max-width: 60vw;
+}

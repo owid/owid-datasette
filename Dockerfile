@@ -12,6 +12,7 @@ RUN apt-get update && \
 ADD docker-entrypoint.sh docker-entrypoint.sh
 ADD requirements.txt requirements.txt
 ADD metadata.yml metadata.yml
+ADD static-files static-files
 
 RUN pip install https://github.com/simonw/datasette/archive/refs/tags/${VERSION}.zip && \
     rm -rf /root/.cache/pip
