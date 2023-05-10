@@ -120,10 +120,6 @@ def postprocess(args):
                 ADD COLUMN subtitle TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.subtitle'))  VIRTUAL;
             ALTER TABLE charts
                 ADD COLUMN note TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.note'))  VIRTUAL;
-            ALTER TABLE charts
-                ADD COLUMN slug TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.slug'))  VIRTUAL;
-            ALTER TABLE charts
-                ADD COLUMN type TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.type'))  VIRTUAL;
                 """
             )
 
