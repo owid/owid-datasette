@@ -12,6 +12,7 @@ const addCopyButtonToCell = (buttonsContainer, value) => {
 
 const externalUrlFields = [
   {
+    // Chart slug
     colNames: [
       "owid.charts.slug",
       "owid.slug",
@@ -21,8 +22,29 @@ const externalUrlFields = [
     fn: (slug) => `https://ourworldindata.org/grapher/${slug}`,
   },
   {
+    // Chart ID
     colNames: ["owid.charts.id", "owid.chartId", "owid.grapherId"],
     fn: (id) => `https://owid.cloud/admin/charts/${id}/edit`,
+  },
+  {
+    // Variable ID
+    colNames: ["owid.variables.id", "owid.variableId"],
+    fn: (id) => `https://owid.cloud/admin/variables/${id}`,
+  },
+  {
+    // Dataset ID
+    colNames: ["owid.datasets.id", "owid.datasetId"],
+    fn: (id) => `https://owid.cloud/admin/datasets/${id}`,
+  },
+  {
+    // Tag ID
+    colNames: ["owid.tags.id", "owid.tagId"],
+    fn: (id) => `https://owid.cloud/admin/tags/${id}`,
+  },
+  {
+    // Post slug
+    colNames: ["owid.posts.slug", "owid.posts_gdocs.slug", "owid.postSlug"],
+    fn: (slug) => `https://ourworldindata.org/${slug}`,
   },
 ];
 
