@@ -23,22 +23,27 @@ const externalUrlFields = [
   },
   {
     // Chart ID
-    colNames: ["owid.charts.id", "owid.chartId", "owid.grapherId"],
+    colNames: [
+      "owid.charts.id",
+      "owid.chartId",
+      "owid.grapherId",
+      "owid/charts",
+    ],
     fn: (id) => `https://owid.cloud/admin/charts/${id}/edit`,
   },
   {
     // Variable ID
-    colNames: ["owid.variables.id", "owid.variableId"],
+    colNames: ["owid.variables.id", "owid.variableId", "owid/variables"],
     fn: (id) => `https://owid.cloud/admin/variables/${id}`,
   },
   {
     // Dataset ID
-    colNames: ["owid.datasets.id", "owid.datasetId"],
+    colNames: ["owid.datasets.id", "owid.datasetId", "owid/datasets"],
     fn: (id) => `https://owid.cloud/admin/datasets/${id}`,
   },
   {
     // Tag ID
-    colNames: ["owid.tags.id", "owid.tagId"],
+    colNames: ["owid.tags.id", "owid.tagId", "owid/tags"],
     fn: (id) => `https://owid.cloud/admin/tags/${id}`,
   },
   {
@@ -58,10 +63,30 @@ const externalUrlByFieldName = externalUrlFields.reduce(
   {}
 );
 
-const addExternalUrlButtonToCell = (buttonsContainer, fieldName, value) => {
-  const href = externalUrlByFieldName[fieldName]?.(value);
+const addExternalUrlButtonToCell = (
+  cell,
+  buttonsContainer,
+  fieldName,
+  value
+) => {
+  let href = externalUrlByFieldName[fieldName]?.(value);
 
-  if (!href) return;
+  // If we don't recognize the field name, also try whether this is a foreign key
+  // linking out to a table we care about, and try to also add a link to that one
+  if (!href) {
+    const link = cell.querySelector("a")?.getAttribute("href");
+    if (!link || !link.startsWith("/")) return;
+
+    const lastSlashIndex = link.lastIndexOf("/");
+    if (lastSlashIndex === -1) return;
+    const tableName = link.substring(1, lastSlashIndex);
+    const id = link.substring(lastSlashIndex + 1);
+
+    href = externalUrlByFieldName[tableName]?.(id);
+
+    if (!href) return;
+  }
+
   const externalUrlButton = document.createElement("a");
   externalUrlButton.className =
     "owid-button owid-external-url-button fa fa-external-link-alt";
@@ -110,7 +135,7 @@ cells.forEach((cell) => {
   const fieldName = [databaseName, tableName, colName]
     .filter((f) => f)
     .join(".");
-  addExternalUrlButtonToCell(buttonsContainer, fieldName, value);
+  addExternalUrlButtonToCell(cell, buttonsContainer, fieldName, value);
 
   // Wrap config JSON in a <details> tag
   if (cell.classList.contains("col-config")) {
