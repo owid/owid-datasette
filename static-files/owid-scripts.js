@@ -9,13 +9,34 @@ const addCopyButtonToCell = (cell, value) => {
   cell.append(copyButton);
 };
 
-const externalUrlFields = {
-  "owid.charts.slug": (slug) => `https://ourworldindata.org/grapher/${slug}`,
-  "owid.charts.id": (id) => `https://owid.cloud/admin/charts/${id}/edit`,
-};
+const externalUrlFields = [
+  {
+    colNames: [
+      "owid.charts.slug",
+      "owid.slug",
+      "owid.chartSlug",
+      "owid.grapherSlug",
+    ],
+    fn: (slug) => `https://ourworldindata.org/grapher/${slug}`,
+  },
+  {
+    colNames: ["owid.charts.id", "owid.chartId", "owid.grapherId"],
+    fn: (id) => `https://owid.cloud/admin/charts/${id}/edit`,
+  },
+];
 
-const addExternalUrlButtonToCell = (cell, field, value) => {
-  const href = externalUrlFields[field]?.(value);
+const externalUrlByFieldName = externalUrlFields.reduce(
+  (acc, { colNames, fn }) => {
+    colNames.forEach((colName) => {
+      acc[colName] = fn;
+    });
+    return acc;
+  },
+  {}
+);
+
+const addExternalUrlButtonToCell = (cell, fieldName, value) => {
+  const href = externalUrlByFieldName[fieldName]?.(value);
 
   if (!href) return;
   const externalUrlButton = document.createElement("a");
@@ -48,8 +69,8 @@ cells.forEach((cell) => {
     if (className.startsWith("col-")) colName = className.replace("col-", "");
   });
 
-  if (databaseName && tableName && colName) {
-    const field = `${databaseName}.${tableName}.${colName}`;
-    addExternalUrlButtonToCell(cell, field, value);
-  }
+  const fieldName = [databaseName, tableName, colName]
+    .filter((f) => f)
+    .join(".");
+  addExternalUrlButtonToCell(cell, fieldName, value);
 });
