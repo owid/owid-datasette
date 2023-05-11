@@ -94,7 +94,7 @@ const addExternalUrlButtonToCell = (
 
   const externalUrlButton = document.createElement("a");
   externalUrlButton.className =
-    "owid-button owid-external-url-button fa fa-external-link-alt";
+    "owid-button owid-external-url-button fa fa-external-link";
   externalUrlButton.target = "_blank";
   externalUrlButton.rel = "noopener noreferrer";
   externalUrlButton.title = "Open in new tab";
