@@ -10,7 +10,7 @@
 .owid-button, a.owid-button {
   position: relative;
   font-size: 0.7em;
-  color: black;
+  color: rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 

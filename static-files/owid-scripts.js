@@ -50,6 +50,13 @@ const addExternalUrlButtonToCell = (buttonsContainer, fieldName, value) => {
   buttonsContainer.appendChild(externalUrlButton);
 };
 
+const wrapInDetailsElement = (element) => {
+  const detail = document.createElement("details");
+  detail.className = "owid-detail";
+  element.parentNode.insertBefore(detail, element);
+  detail.appendChild(element);
+};
+
 let databaseName;
 let tableName;
 const body = document.body;
@@ -64,12 +71,15 @@ cells.forEach((cell) => {
   const value = cell.innerText;
   if (!value?.trim?.()) return;
 
+  // Add "owid-buttons" container for any buttons
   const buttonsContainer = document.createElement("div");
   buttonsContainer.className = "owid-buttons";
   cell.appendChild(buttonsContainer);
 
+  // Add a copy button
   addCopyButtonToCell(buttonsContainer, value);
 
+  // Add an external URL button, linking to the grapher/admin etc.
   let colName;
   cell.classList.forEach((className) => {
     if (className.startsWith("col-")) colName = className.replace("col-", "");
@@ -79,4 +89,10 @@ cells.forEach((cell) => {
     .filter((f) => f)
     .join(".");
   addExternalUrlButtonToCell(buttonsContainer, fieldName, value);
+
+  // Wrap config JSON in a <details> tag
+  if (cell.classList.contains("col-config")) {
+    const pre = cell.querySelector("pre");
+    if (pre) wrapInDetailsElement(pre);
+  }
 });
