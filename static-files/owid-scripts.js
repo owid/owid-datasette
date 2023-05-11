@@ -51,6 +51,11 @@ const externalUrlFields = [
     colNames: ["owid.posts.slug", "owid.posts_gdocs.slug", "owid.postSlug"],
     fn: (slug) => `https://ourworldindata.org/${slug}`,
   },
+  {
+    // Gdocs post identifier
+    colNames: ["owid.posts_gdocs.id", "owid/posts_gdocs"],
+    fn: (id) => `https://owid.cloud/admin/gdocs/${id}/preview`,
+  },
 ];
 
 const externalUrlByFieldName = externalUrlFields.reduce(
@@ -138,7 +143,10 @@ cells.forEach((cell) => {
   addExternalUrlButtonToCell(cell, buttonsContainer, fieldName, value);
 
   // Wrap config JSON in a <details> tag
-  if (cell.classList.contains("col-config")) {
+  if (
+    cell.classList.contains("col-config") ||
+    cell.classList.contains("col-content")
+  ) {
     const pre = cell.querySelector("pre");
     if (pre) wrapInDetailsElement(pre);
   }
