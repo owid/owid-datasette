@@ -2,11 +2,12 @@ const copyToClipboard = async (text) => {
   await navigator.clipboard.writeText(text);
 };
 
-const addCopyButtonToCell = (cell, value) => {
+const addCopyButtonToCell = (buttonsContainer, value) => {
   const copyButton = document.createElement("a");
   copyButton.className = "owid-button owid-copy-button fa fa-copy";
+  copyButton.title = "Copy to clipboard";
   copyButton.onclick = () => copyToClipboard(value);
-  cell.append(copyButton);
+  buttonsContainer.append(copyButton);
 };
 
 const externalUrlFields = [
@@ -35,7 +36,7 @@ const externalUrlByFieldName = externalUrlFields.reduce(
   {}
 );
 
-const addExternalUrlButtonToCell = (cell, fieldName, value) => {
+const addExternalUrlButtonToCell = (buttonsContainer, fieldName, value) => {
   const href = externalUrlByFieldName[fieldName]?.(value);
 
   if (!href) return;
@@ -44,8 +45,9 @@ const addExternalUrlButtonToCell = (cell, fieldName, value) => {
     "owid-button owid-external-url-button fa fa-external-link-alt";
   externalUrlButton.target = "_blank";
   externalUrlButton.rel = "noopener noreferrer";
+  externalUrlButton.title = "Open in new tab";
   externalUrlButton.href = href;
-  cell.appendChild(externalUrlButton);
+  buttonsContainer.appendChild(externalUrlButton);
 };
 
 let databaseName;
@@ -60,9 +62,13 @@ body.classList.forEach((className) => {
 const cells = document.querySelectorAll("table.rows-and-columns td");
 cells.forEach((cell) => {
   const value = cell.innerText;
-  if (!value) return;
+  if (!value?.trim?.()) return;
 
-  addCopyButtonToCell(cell, value);
+  const buttonsContainer = document.createElement("div");
+  buttonsContainer.className = "owid-buttons";
+  cell.appendChild(buttonsContainer);
+
+  addCopyButtonToCell(buttonsContainer, value);
 
   let colName;
   cell.classList.forEach((className) => {
@@ -72,5 +78,5 @@ cells.forEach((cell) => {
   const fieldName = [databaseName, tableName, colName]
     .filter((f) => f)
     .join(".");
-  addExternalUrlButtonToCell(cell, fieldName, value);
+  addExternalUrlButtonToCell(buttonsContainer, fieldName, value);
 });
