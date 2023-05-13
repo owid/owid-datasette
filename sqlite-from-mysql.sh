@@ -47,10 +47,10 @@ mysqldump --skip-extended-insert --no-tablespaces --column-statistics=0 --compac
   | sqlite3 owid-public.db
 # Run the postprocess-db python script. This is the place to censor some rows or add views etc
 cp owid-public.db owid-private.db
-python process-db/postprocess-db.py owid-public.db
-python process-db/extract-links.py owid-public.db
-python process-db/postprocess-db.py --keep-confidential-data owid-private.db
-python process-db/extract-links.py owid-private.db
+poetry run python process-db/postprocess-db.py owid-public.db
+poetry run python process-db/extract-links.py owid-public.db
+poetry run python process-db/postprocess-db.py --keep-confidential-data owid-private.db
+poetry run python procss-db/extract-links.py owid-private.db
 # Gzip the file
 gzip -9 -c owid-public.db > owid.db.gz
 # And upload to s3
