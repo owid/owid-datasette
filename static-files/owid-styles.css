@@ -1,0 +1,36 @@
+.owid-buttons {
+  position: absolute;
+  top: .5em;
+  right: .5em;
+  display: flex;
+  flex-direction: row;
+  gap: .5em;
+}
+
+.owid-button, a.owid-button {
+  position: relative;
+  font-size: 0.7em;
+  color: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.owid-button:hover, a.owid-button:hover {
+  color: #555;
+}
+
+table.rows-and-columns td {
+  max-width: 60vw;
+  position: relative;
+}
+
+.owid-copy-button {
+  display: none;
+}
+
+table.rows-and-columns td:hover .owid-copy-button {
+  display: block;
+}
+
+table td pre {
+  white-space: pre-wrap;
+}
