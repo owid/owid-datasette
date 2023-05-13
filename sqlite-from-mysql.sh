@@ -50,7 +50,7 @@ cp owid-public.db owid-private.db
 poetry run python process-db/postprocess-db.py owid-public.db
 poetry run python process-db/extract-links.py owid-public.db
 poetry run python process-db/postprocess-db.py --keep-confidential-data owid-private.db
-poetry run python procss-db/extract-links.py owid-private.db
+poetry run python process-db/extract-links.py owid-private.db
 # Gzip the file
 gzip -9 -c owid-public.db > owid.db.gz
 # And upload to s3
