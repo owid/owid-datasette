@@ -4,10 +4,16 @@ from contextlib import closing
 
 import functools
 import threading
+import argparse
 import json
 import rure
+from typing import Literal
 
-KEEP_CONFIDENTIAL_DATA = "keep-confidential-data"
+
+class ParsedArgs(argparse.Namespace):
+    db_name: str
+    type: Literal["public"] | Literal["private"]
+
 
 # Below taken from datasette-rure so we can use sqlite regexes when building our sqlite file
 @functools.lru_cache(maxsize=128)
@@ -45,20 +51,16 @@ def regexp_matches(pattern, input):
     return json.dumps([m.groupdict() for m in compiled_regex(pattern).finditer(input)])
 
 
-def postprocess(args):
-    if len(args) < 1 or len(args) > 2 or (len(args) == 2 and args[1] != f"--{KEEP_CONFIDENTIAL_DATA}" ):
-        print(f"Usage: postprocess-db.py DBNAME [--{KEEP_CONFIDENTIAL_DATA}]")
-        return
-    keep_confidential_data = len(args) == 2 and args[1] == f"--{KEEP_CONFIDENTIAL_DATA}"
-    if keep_confidential_data:
-        print("WARNING: --keep-confidential-data flag given, data dump will not be cleaned of private data")
-    with closing(sqlite3.connect(args[0])) as connection:
+def postprocess(parsed_args: ParsedArgs):
+    if parsed_args.type == "private":
+        print("WARNING: running private export, handle the export with care")
+    with closing(sqlite3.connect(parsed_args.db_name)) as connection:
         connection.create_function("regexp", 2, regexp)
         connection.create_function("regexp_match", 2, regexp_match)
         connection.create_function("regexp_match", 3, regexp_match)
         connection.create_function("regexp_matches", 2, regexp_matches)
         with closing(connection.cursor()) as cursor:
-            if not keep_confidential_data:
+            if parsed_args.type == "public":
                 print("Ensuring no passwords are published")
                 cursor.execute("UPDATE users set password=''")
 
@@ -371,4 +373,14 @@ def postprocess(args):
 
 
 if __name__ == "__main__":
-    postprocess(sys.argv[1:])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("db_name", help="The name of the database to postprocess")
+    parser.add_argument(
+        "-t",
+        "--type",
+        help="Whether this is a private or public export",
+        choices=["private", "public"],
+        default="public",
+    )
+    parsed_args = parser.parse_args(namespace=ParsedArgs())
+    postprocess(parsed_args)
