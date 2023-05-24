@@ -368,7 +368,7 @@ def postprocess(parsed_args: ParsedArgs):
                 """
             )
 
-            if (parsed_args.type == "private"):
+            if parsed_args.type == "private":
                 cursor.executescript(
                     """-- sql
                     CREATE VIEW charts_pageviews
@@ -377,6 +377,23 @@ def postprocess(parsed_args: ParsedArgs):
                     from charts c
                     left join pageviews pv on pv.url = "https://ourworldindata.org/grapher/" || c.slug
                     order by views_14d desc
+                    """
+                )
+                cursor.executescript(
+                    """-- sql
+                    CREATE VIEW topic_pages_pageviews
+                    AS
+                    SELECT url,
+                        views_365d,
+                        iif(content like "%bodyClassName:topic-page%", "new", "old") page_format
+                    FROM pageviews pv
+                    JOIN posts p ON replace(pv.url, "https://ourworldindata.org/", "") = p.slug
+                    WHERE TYPE = "page"
+                    AND DAY =
+                        (SELECT max(DAY)
+                        FROM pageviews)
+                    AND slug not in ("", "privacy-policy", "blog", "team", "faqs", "about", "jobs")
+                    ORDER BY views_365d DESC
                     """
                 )
 
