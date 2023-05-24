@@ -373,7 +373,7 @@ def postprocess(parsed_args: ParsedArgs):
                     """-- sql
                     CREATE VIEW charts_pageviews
                     AS
-                    select id as grapherId, slug, type, config->>"$.isPublished" as isPublished, views_7d, views_14d
+                    select id as grapherId, slug, type, config->>"$.isPublished" as isPublished, views_7d, views_14d, views_365d
                     from charts c
                     left join pageviews pv on pv.url = "https://ourworldindata.org/grapher/" || c.slug
                     order by views_14d desc
