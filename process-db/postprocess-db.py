@@ -368,6 +368,18 @@ def postprocess(parsed_args: ParsedArgs):
                 """
             )
 
+            if (parsed_args.type == "private"):
+                cursor.executescript(
+                    """-- sql
+                    CREATE VIEW charts_pageviews
+                    AS
+                    select id as grapherId, slug, type, config->>"$.isPublished" as isPublished, views_7d, views_14d
+                    from charts c
+                    left join pageviews pv on pv.url = "https://ourworldindata.org/grapher/" || c.slug
+                    order by views_14d desc
+                    """
+                )
+
             connection.commit()
             print("done")
 
