@@ -66,7 +66,7 @@ const externalUrlFields = [
 ];
 
 const externalUrlByFieldName = externalUrlFields.reduce((acc, urlField) => {
-  colNames.forEach((colName) => (acc[colName] = urlField));
+  urlField.colNames.forEach((colName) => (acc[colName] = urlField));
   return acc;
 }, {});
 
