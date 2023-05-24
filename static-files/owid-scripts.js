@@ -71,10 +71,14 @@ const externalUrlByFieldName = externalUrlFields.reduce(
 const addExternalUrlButtonToCell = (
   cell,
   buttonsContainer,
-  fieldName,
+  fieldNameVariants,
   value
 ) => {
-  let href = externalUrlByFieldName[fieldName]?.(value);
+  let href;
+  for (const variant of fieldNameVariants) {
+    href = externalUrlByFieldName[variant]?.(value);
+    if (href) break;
+  }
 
   // If we don't recognize the field name, also try whether this is a foreign key
   // linking out to a table we care about, and try to also add a link to that one
@@ -137,10 +141,11 @@ cells.forEach((cell) => {
     if (className.startsWith("col-")) colName = className.replace("col-", "");
   });
 
-  const fieldName = [databaseName, tableName, colName]
-    .filter((f) => f)
-    .join(".");
-  addExternalUrlButtonToCell(cell, buttonsContainer, fieldName, value);
+  const fieldNameVariants = [
+    [databaseName, tableName, colName],
+    [databaseName, colName],
+  ].map((variant) => variant.filter((f) => f).join("."));
+  addExternalUrlButtonToCell(cell, buttonsContainer, fieldNameVariants, value);
 
   // Wrap config JSON in a <details> tag
   if (
