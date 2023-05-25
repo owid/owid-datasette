@@ -19,7 +19,8 @@ const externalUrlFields = [
       "owid.chartSlug",
       "owid.grapherSlug",
     ],
-    fn: (slug) => `https://ourworldindata.org/grapher/${slug}`,
+    href: (slug) => `https://ourworldindata.org/grapher/${slug}`,
+    title: "Open chart on ourworldindata.org (only works if published)",
   },
   {
     // Chart ID
@@ -29,52 +30,59 @@ const externalUrlFields = [
       "owid.grapherId",
       "owid/charts",
     ],
-    fn: (id) => `https://owid.cloud/admin/charts/${id}/edit`,
+    href: (id) => `https://owid.cloud/admin/charts/${id}/edit`,
+    title: "Open chart in grapher admin",
   },
   {
     // Variable ID
     colNames: ["owid.variables.id", "owid.variableId", "owid/variables"],
-    fn: (id) => `https://owid.cloud/admin/variables/${id}`,
+    href: (id) => `https://owid.cloud/admin/variables/${id}`,
+    title: "Open variable in grapher admin",
   },
   {
     // Dataset ID
     colNames: ["owid.datasets.id", "owid.datasetId", "owid/datasets"],
-    fn: (id) => `https://owid.cloud/admin/datasets/${id}`,
+    href: (id) => `https://owid.cloud/admin/datasets/${id}`,
+    title: "Open dataset in grapher admin",
   },
   {
     // Tag ID
     colNames: ["owid.tags.id", "owid.tagId", "owid/tags"],
-    fn: (id) => `https://owid.cloud/admin/tags/${id}`,
+    href: (id) => `https://owid.cloud/admin/tags/${id}`,
+    title: "Open tag in grapher admin",
   },
   {
     // Post slug
     colNames: ["owid.posts.slug", "owid.posts_gdocs.slug", "owid.postSlug"],
-    fn: (slug) => `https://ourworldindata.org/${slug}`,
+    href: (slug) => `https://ourworldindata.org/${slug}`,
+    title: "Open post on ourworldindata.org (only works if published)",
   },
   {
     // Gdocs post identifier
     colNames: ["owid.posts_gdocs.id", "owid/posts_gdocs"],
-    fn: (id) => `https://owid.cloud/admin/gdocs/${id}/preview`,
+    href: (id) => `https://owid.cloud/admin/gdocs/${id}/preview`,
+    title: "Preview post in grapher admin",
   },
 ];
 
-const externalUrlByFieldName = externalUrlFields.reduce(
-  (acc, { colNames, fn }) => {
-    colNames.forEach((colName) => {
-      acc[colName] = fn;
-    });
-    return acc;
-  },
-  {}
-);
+const externalUrlByFieldName = externalUrlFields.reduce((acc, urlField) => {
+  urlField.colNames.forEach((colName) => (acc[colName] = urlField));
+  return acc;
+}, {});
 
 const addExternalUrlButtonToCell = (
   cell,
   buttonsContainer,
-  fieldName,
+  fieldNameVariants,
   value
 ) => {
-  let href = externalUrlByFieldName[fieldName]?.(value);
+  let href, title;
+  for (const variant of fieldNameVariants) {
+    const urlField = externalUrlByFieldName[variant];
+    href = urlField?.href(value);
+    title = urlField?.title;
+    if (href) break;
+  }
 
   // If we don't recognize the field name, also try whether this is a foreign key
   // linking out to a table we care about, and try to also add a link to that one
@@ -97,7 +105,7 @@ const addExternalUrlButtonToCell = (
     "owid-button owid-external-url-button fa fa-external-link";
   externalUrlButton.target = "_blank";
   externalUrlButton.rel = "noopener noreferrer";
-  externalUrlButton.title = "Open in new tab";
+  externalUrlButton.title = title ?? "Open in new tab";
   externalUrlButton.href = href;
   buttonsContainer.appendChild(externalUrlButton);
 };
@@ -137,10 +145,11 @@ cells.forEach((cell) => {
     if (className.startsWith("col-")) colName = className.replace("col-", "");
   });
 
-  const fieldName = [databaseName, tableName, colName]
-    .filter((f) => f)
-    .join(".");
-  addExternalUrlButtonToCell(cell, buttonsContainer, fieldName, value);
+  const fieldNameVariants = [
+    [databaseName, tableName, colName],
+    [databaseName, colName],
+  ].map((variant) => variant.filter((f) => f).join("."));
+  addExternalUrlButtonToCell(cell, buttonsContainer, fieldNameVariants, value);
 
   // Wrap config JSON in a <details> tag
   if (
