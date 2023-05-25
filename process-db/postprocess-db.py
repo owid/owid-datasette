@@ -402,6 +402,35 @@ def postprocess(parsed_args: ParsedArgs):
                     ORDER BY views_365d DESC
                     """
                 )
+                cursor.executescript(
+                    """-- sql
+                    CREATE VIEW tags_pageviews
+                    AS
+                    WITH chart_tags_pageviews AS
+                        (SELECT ct.tagId AS tag_id,
+                                sum(cpv.views_365d) AS grapher_views_365d
+                        FROM charts c
+                        JOIN chart_tags ct ON c.id = ct.chartId
+                        JOIN charts_pageviews cpv ON cpv.grapherId = ct.chartId
+                        GROUP BY tag_id),
+                        page_tags_pageview AS
+                        (SELECT pt.tag_id,
+                                sum(pv.views_365d) AS topic_views_365d
+                        FROM posts p
+                        JOIN post_tags pt ON p.id = pt.post_id
+                        JOIN pageviews pv ON replace(pv.url, "https://ourworldindata.org/", "") = p.slug
+                        WHERE p.type = "page"
+                        GROUP BY tag_id)
+                    SELECT tags.name AS tag_name,
+                        chart_tags_pageviews.grapher_views_365d + page_tags_pageview.topic_views_365d AS total_views_365d,
+                        chart_tags_pageviews.grapher_views_365d,
+                        page_tags_pageview.topic_views_365d
+                    FROM chart_tags_pageviews
+                    JOIN page_tags_pageview USING(tag_id)
+                    JOIN tags ON tags.id = chart_tags_pageviews.tag_id
+                    ORDER BY total_views_365d DESC
+                    """
+                )
 
             connection.commit()
             print("done")
