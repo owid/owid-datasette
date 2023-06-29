@@ -245,6 +245,7 @@ def postprocess(parsed_args: ParsedArgs):
                 originUrlAsAuthored IS NOT NULL
                 AND originUrlAsAuthored IS NOT ""
                 AND originUrlAsAuthored not like "%tinyco.re%"
+                AND originUrlAsAuthored not like "%core-econ%"
             )
             SELECT
             c.chartId,
