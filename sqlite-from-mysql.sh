@@ -41,6 +41,8 @@ mysqldump --skip-extended-insert --no-tablespaces --column-statistics=0 --compac
     posts_gdocs_x_images \
     posts_gdocs_links \
     posts_gdocs_x_tags \
+    explorers \
+    explorer_charts \
   | ./mysql2sqlite - \
   | sed 's/_utf8mb4//g' \
   | sed 's/JSON_UNQUOTE(JSON_EXTRACT(/(JSON_EXTRACT(/gi' \
