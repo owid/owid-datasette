@@ -6,13 +6,30 @@ import functools
 import threading
 import argparse
 import json
+import requests
 import rure
 from typing import Literal
+
+DEFAULT_GRAPHER_CONFIG_URL = (
+    "https://files.ourworldindata.org/schemas/grapher-schema.default.latest.json"
+)
 
 
 class ParsedArgs(argparse.Namespace):
     db_name: str
     type: Literal["public"] | Literal["private"]
+
+
+def deep_merge(base_dict, overlay_dict):
+    for key in overlay_dict:
+        if key in base_dict:
+            if isinstance(base_dict[key], dict) and isinstance(overlay_dict[key], dict):
+                deep_merge(base_dict[key], overlay_dict[key])
+            else:
+                base_dict[key] = overlay_dict[key]
+        else:
+            base_dict[key] = overlay_dict[key]
+    return base_dict
 
 
 # Below taken from datasette-rure so we can use sqlite regexes when building our sqlite file
@@ -124,6 +141,22 @@ def postprocess(parsed_args: ParsedArgs):
                 ADD COLUMN note TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.note'))  VIRTUAL;
                 """
             )
+
+            response = requests.get(DEFAULT_GRAPHER_CONFIG_URL)
+            if response.ok:
+                default_config = response.json()
+                print("Add `configWithDefaults` column to charts")
+                cursor.executescript(
+                    "ALTER TABLE charts ADD COLUMN configWithDefaults json;"
+                )
+                configs = cursor.execute("SELECT id, config FROM charts")
+                for id, _config in configs.fetchall():
+                    config = json.loads(_config)
+                    config_with_defaults = deep_merge(default_config, config)
+                    cursor.execute(
+                        "UPDATE charts SET configWithDefaults = ? WHERE id = ?",
+                        (json.dumps(config_with_defaults), id),
+                    )
 
             print("Add useful columns to sources")
             cursor.executescript(
