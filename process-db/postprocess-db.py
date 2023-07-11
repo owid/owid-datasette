@@ -432,6 +432,38 @@ def postprocess(parsed_args: ParsedArgs):
                     """
                 )
 
+            cursor.executescript(
+                """-- sql
+                CREATE VIEW explorers_num_views
+                AS
+                SELECT
+                    slug,
+                    config->>"$.explorerTitle" AS title,
+                    isPublished,
+                    json_array_length(value->"$.block") AS numExplorerViews
+                FROM explorers, json_each(explorers.config, "$.blocks")
+                WHERE value->>"$.type" = "graphers"
+                ORDER BY isPublished DESC, numExplorerViews DESC
+                """
+            )
+
+            cursor.executescript(
+                """-- sql
+                CREATE VIEW explorers_pageviews
+                AS
+                SELECT
+                    slug,
+                    config->>"$.explorerTitle" AS title,
+                    views_7d,
+                    views_14d,
+                    views_365d
+                FROM explorers
+                LEFT JOIN pageviews ON pageviews.url = "https://ourworldindata.org/explorers/" || slug
+                WHERE isPublished
+                ORDER BY views_14d DESC
+                """
+            )
+
             connection.commit()
             print("done")
 
