@@ -390,16 +390,33 @@ def postprocess(parsed_args: ParsedArgs):
                     """-- sql
                     CREATE VIEW topic_pages_pageviews
                     AS
+                    WITH topic_pages AS
+                        (SELECT slug,
+                                "new" AS page_format
+                        FROM posts_gdocs
+                        WHERE content like '%"type": "topic-page"%'
+                            AND published = 1
+                        UNION SELECT slug,
+                                    "old" AS page_format
+                        FROM posts
+                        WHERE TYPE = "page"
+                            AND status = "publish" )
                     SELECT url,
-                        views_365d,
-                        iif(content like "%bodyClassName:topic-page%", "new", "old") page_format
+                        max(views_365d) AS views_365d,
+                        min(page_format) AS page_format
                     FROM pageviews pv
-                    JOIN posts p ON replace(pv.url, "https://ourworldindata.org/", "") = p.slug
-                    WHERE TYPE = "page"
-                    AND DAY =
-                        (SELECT max(DAY)
-                        FROM pageviews)
-                    AND slug not in ("", "privacy-policy", "blog", "team", "faqs", "about", "jobs")
+                    JOIN topic_pages tp ON replace(pv.url, "https://ourworldindata.org/", "") = tp.slug
+                    WHERE DAY =
+                            (SELECT max(DAY)
+                            FROM pageviews)
+                        AND slug not in ("",
+                                        "privacy-policy",
+                                        "blog",
+                                        "team",
+                                        "faqs",
+                                        "about",
+                                        "jobs")
+                    GROUP BY url
                     ORDER BY views_365d DESC
                     """
                 )
