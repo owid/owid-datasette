@@ -424,28 +424,40 @@ def postprocess(parsed_args: ParsedArgs):
                     """-- sql
                     CREATE VIEW tags_pageviews
                     AS
-                    WITH chart_tags_pageviews AS
-                        (SELECT ct.tagId AS tag_id,
-                                sum(cpv.views_365d) AS grapher_views_365d
+                    WITH grapher_tags AS
+                        (SELECT tagId AS tag_id,
+                                "https://ourworldindata.org/grapher/" || c.slug AS url
                         FROM charts c
                         JOIN chart_tags ct ON c.id = ct.chartId
-                        JOIN charts_pageviews cpv ON cpv.grapherId = ct.chartId
-                        GROUP BY tag_id),
-                        page_tags_pageview AS
-                        (SELECT pt.tag_id,
-                                sum(pv.views_365d) AS posts_views_365d
+                        WHERE slug != "" ),
+                        wp_tags AS
+                        (SELECT tag_id,
+                                "https://ourworldindata.org/" || p.slug AS url
                         FROM posts p
                         JOIN post_tags pt ON p.id = pt.post_id
-                        JOIN pageviews pv ON replace(pv.url, "https://ourworldindata.org/", "") = p.slug
-                        GROUP BY tag_id)
-                    SELECT tags.name AS tag_name,
-                        chart_tags_pageviews.grapher_views_365d + page_tags_pageview.posts_views_365d AS total_views_365d,
-                        chart_tags_pageviews.grapher_views_365d,
-                        page_tags_pageview.posts_views_365d
-                    FROM chart_tags_pageviews
-                    JOIN page_tags_pageview USING(tag_id)
-                    JOIN tags ON tags.id = chart_tags_pageviews.tag_id
-                    ORDER BY total_views_365d DESC
+                        WHERE slug != "" ),
+                        gdocs_tags AS
+                        (SELECT tagId AS tag_id,
+                                "https://ourworldindata.org/" || pgd.slug AS url
+                        FROM posts_gdocs pgd
+                        JOIN posts_gdocs_x_tags pgdt ON pgd.id = pgdt.gdocId
+                        WHERE slug != "" ),
+                        all_tags AS
+                        (SELECT *
+                        FROM grapher_tags
+                        UNION SELECT *
+                        FROM wp_tags
+                        UNION SELECT *
+                        FROM gdocs_tags)
+                    SELECT t.name AS tag_name,
+                        sum(views_365d) AS views_365d
+                    FROM all_tags
+                    JOIN pageviews pv ON pv.url = all_tags.url
+                    JOIN tags t ON t.id = all_tags.tag_id
+                    WHERE name not in ("Entries",
+                                    "Uncategorized")
+                    GROUP BY tag_id
+                    ORDER BY views_365d DESC
                     """
                 )
 
