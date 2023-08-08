@@ -467,7 +467,7 @@ def postprocess(parsed_args: ParsedArgs):
                 AS
                 SELECT dataset_name,
                     sum(views_365d) AS sum_views_365d,
-                    avg(views_365d) AS avg_views_365d,
+                    cast(avg(views_365d) as int) AS avg_views_365d,
                     "https://owid.cloud/admin/datasets/" || id AS url
                 FROM
                     (SELECT DISTINCT d.name AS dataset_name,
@@ -481,7 +481,7 @@ def postprocess(parsed_args: ParsedArgs):
                     JOIN charts_pageviews cpv ON c.id = cpv.grapherId)
                 GROUP BY dataset_name,
                         id
-                ORDER BY sum_views_365d DESC
+                ORDER BY avg_views_365d DESC
                 """
             )
 
