@@ -463,6 +463,29 @@ def postprocess(parsed_args: ParsedArgs):
 
             cursor.executescript(
                 """-- sql
+                CREATE VIEW datasets_pageviews
+                AS
+                SELECT dataset_name,
+                    "https://owid.cloud/admin/datasets/" || id AS url,
+                    sum(views_365d) AS views_365d
+                FROM
+                    (SELECT DISTINCT d.name AS dataset_name,
+                                    d.id,
+                                    c.slug,
+                                    views_365d
+                    FROM datasets d
+                    JOIN variables v ON d.id = v.datasetId
+                    JOIN chart_variables cv ON cv.variableId = v.id
+                    JOIN charts c ON c.id = cv.chartId
+                    JOIN charts_pageviews cpv ON c.id = cpv.grapherId)
+                GROUP BY dataset_name,
+                        id
+                ORDER BY views_365d DESC
+                """
+            )
+
+            cursor.executescript(
+                """-- sql
                 CREATE VIEW explorers_num_views
                 AS
                 SELECT
