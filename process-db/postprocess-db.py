@@ -467,7 +467,8 @@ def postprocess(parsed_args: ParsedArgs):
                 AS
                 SELECT dataset_name,
                     "https://owid.cloud/admin/datasets/" || id AS url,
-                    sum(views_365d) AS views_365d
+                    sum(views_365d) AS sum_views_365d,
+                    avg(views_365d) AS avg_views_365d
                 FROM
                     (SELECT DISTINCT d.name AS dataset_name,
                                     d.id,
