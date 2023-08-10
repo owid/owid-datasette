@@ -481,7 +481,7 @@ def postprocess(parsed_args: ParsedArgs):
                     JOIN charts_pageviews cpv ON c.id = cpv.grapherId)
                 GROUP BY dataset_name,
                         id
-                ORDER BY avg_views_365d DESC
+                ORDER BY sum_views_365d DESC
                 """
             )
 
