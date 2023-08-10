@@ -397,7 +397,7 @@ def postprocess(parsed_args: ParsedArgs):
                         WHERE content like '%"type": "topic-page"%'
                             AND published = 1
                         UNION SELECT slug,
-                                    "old" AS page_format
+                                    iif(content like "%bodyClassName:topic-page%", "new", "old") AS page_format
                         FROM posts
                         WHERE TYPE = "page"
                             AND status = "publish" )
