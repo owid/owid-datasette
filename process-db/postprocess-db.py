@@ -366,18 +366,23 @@ def postprocess(parsed_args: ParsedArgs):
             if parsed_args.type == "private":
                 cursor.executescript(
                     """-- sql
-                    CREATE VIEW charts_pageviews
-                    AS
-                    SELECT id AS grapherId,
+                    CREATE VIEW charts_pageviews AS
+                    SELECT
+                        id AS grapherId,
                         slug,
                         TYPE,
                         views_365d,
                         views_14d,
                         views_7d
-                    FROM charts c
-                    LEFT JOIN pageviews pv ON pv.url = "https://ourworldindata.org/grapher/" || c.slug
-                    WHERE config ->> "$.isPublished"
-                    ORDER BY views_365d DESC
+                    FROM
+                        charts c
+                    LEFT JOIN
+                        pageviews pv ON pv.url = "https://ourworldindata.org/grapher/" || c.slug
+                    WHERE
+                        json_extract(config, '$.isPublished') = 1
+                    ORDER BY
+                        views_365d DESC
+
                     """
                 )
                 cursor.executescript(
@@ -481,33 +486,39 @@ def postprocess(parsed_args: ParsedArgs):
 
             cursor.executescript(
                 """-- sql
-                CREATE VIEW explorers_num_views
-                AS
+                CREATE VIEW explorers_num_views AS
                 SELECT
                     slug,
-                    config->>"$.explorerTitle" AS title,
+                    json_extract(config, '$.explorerTitle') AS title,
                     isPublished,
-                    json_array_length(value->"$.block") AS numExplorerViews
-                FROM explorers, json_each(explorers.config, "$.blocks")
-                WHERE value->>"$.type" = "graphers"
-                ORDER BY isPublished DESC, numExplorerViews DESC
+                    json_array_length(json_extract(value, '$.block')) AS numExplorerViews
+                FROM
+                    explorers,
+                    json_each(json_extract(explorers.config, '$.blocks'))
+                WHERE
+                    json_extract(value, '$.type') = 'graphers'
+                ORDER BY
+                    isPublished DESC, numExplorerViews DESC
                 """
             )
 
             cursor.executescript(
                 """-- sql
-                CREATE VIEW explorers_pageviews
-                AS
+                CREATE VIEW explorers_pageviews AS
                 SELECT
                     slug,
-                    config->>"$.explorerTitle" AS title,
+                    json_extract(config, '$.explorerTitle') AS title,
                     views_7d,
                     views_14d,
                     views_365d
-                FROM explorers
-                LEFT JOIN pageviews ON pageviews.url = "https://ourworldindata.org/explorers/" || slug
-                WHERE isPublished
-                ORDER BY views_14d DESC
+                FROM
+                    explorers
+                LEFT JOIN
+                    pageviews ON pageviews.url = "https://ourworldindata.org/explorers/" || slug
+                WHERE
+                    isPublished
+                ORDER BY
+                    views_14d DESC
                 """
             )
 
