@@ -309,7 +309,7 @@ def postprocess(parsed_args: ParsedArgs):
                 id,
                 title,
                 "https://owid.cloud/admin/variables/" || variableId as edit_url,
-                "https://owid.cloud/admin/charts/" || id as chart_edit_url
+                "https://owid.cloud/admin/charts/" || id || "/edit" as chart_edit_url
             from
                 charts c
                 join (
