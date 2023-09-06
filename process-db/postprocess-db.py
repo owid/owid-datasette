@@ -169,7 +169,12 @@ def postprocess(parsed_args: ParsedArgs):
             select
                 title,
                 group_concat(t.name) as tags,
-                printf("https://owid.cloud/admin/charts/%d/edit", c.id) AS url
+                printf("https://owid.cloud/admin/charts/%d/edit", c.id) AS URL,
+                CASE
+                    WHEN JSON_EXTRACT(config, "$.isPublished") IS NOT NULL
+                    THEN TRUE
+                    ELSE FALSE
+                END AS isPublished
             from
                 charts c
                 left join chart_tags ct on c.id = ct.chartId
@@ -179,7 +184,6 @@ def postprocess(parsed_args: ParsedArgs):
                     trim(json_extract(config, "$.originUrl")) = ""
                     OR json_extract(config, "$.originUrl") IS NULL
                 )
-                and json_extract(config, "$.isPublished") = True
             group by
                 c.title
             order by
@@ -232,7 +236,8 @@ def postprocess(parsed_args: ParsedArgs):
                         JSON_EXTRACT(config, "$.originUrl")
                     ),
                     '/'
-                ) AS originUrlPostSlug
+                ) AS originUrlPostSlug,
+                JSON_EXTRACT(config, "$.isPublished") as isPublished
             FROM
                 charts
             WHERE
@@ -251,7 +256,12 @@ def postprocess(parsed_args: ParsedArgs):
                 WHEN c.originUrlPostSlug IS NOT NULL
                 THEN "https://ourworldindata.org/" || c.originUrlPostSlug
                 ELSE NULL
-            END AS originUrlPostLink
+            END AS originUrlPostLink,
+            CASE
+                WHEN c.isPublished IS NOT NULL
+                THEN TRUE
+                ELSE FALSE
+            END AS isPublished
             FROM
             chartOriginUrl c
             LEFT JOIN posts p ON p.slug = c.originUrlPostSlug
