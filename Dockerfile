@@ -1,4 +1,4 @@
-FROM ubuntu:22.10
+FROM ubuntu:23.04
 
 # Version of Datasette to install, e.g. 0.55
 #   docker build . -t datasette --build-arg VERSION=0.55
@@ -14,10 +14,11 @@ ADD requirements.txt requirements.txt
 ADD metadata.yml metadata.yml
 ADD static-files static-files
 
-RUN pip install https://github.com/simonw/datasette/archive/refs/tags/${VERSION}.zip && \
+# We slightly abuse the --break-system-packages flag here to install Datasette. We should create .venv instead.
+RUN pip install https://github.com/simonw/datasette/archive/refs/tags/${VERSION}.zip --break-system-packages && \
     rm -rf /root/.cache/pip
 
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --break-system-packages
 
 EXPOSE 8001
 CMD ["/bin/bash", "docker-entrypoint.sh"]
