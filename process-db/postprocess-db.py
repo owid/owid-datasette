@@ -2,6 +2,7 @@ import sqlite3
 import sys
 from contextlib import closing
 
+import copy
 import functools
 import threading
 import argparse
@@ -21,15 +22,16 @@ class ParsedArgs(argparse.Namespace):
 
 
 def deep_merge(base_dict, overlay_dict):
+    base_dict_copy = copy.deepcopy(base_dict)
     for key in overlay_dict:
-        if key in base_dict:
-            if isinstance(base_dict[key], dict) and isinstance(overlay_dict[key], dict):
-                deep_merge(base_dict[key], overlay_dict[key])
+        if key in base_dict_copy:
+            if isinstance(base_dict_copy[key], dict) and isinstance(overlay_dict[key], dict):
+                deep_merge(base_dict_copy[key], overlay_dict[key])
             else:
-                base_dict[key] = overlay_dict[key]
+                base_dict_copy[key] = overlay_dict[key]
         else:
-            base_dict[key] = overlay_dict[key]
-    return base_dict
+            base_dict_copy[key] = overlay_dict[key]
+    return base_dict_copy
 
 
 # Below taken from datasette-rure so we can use sqlite regexes when building our sqlite file
