@@ -154,6 +154,7 @@ cells.forEach((cell) => {
   // Wrap config JSON in a <details> tag
   if (
     cell.classList.contains("col-config") ||
+    cell.classList.contains("col-configWithDefaults") ||
     cell.classList.contains("col-content")
   ) {
     const pre = cell.querySelector("pre");
