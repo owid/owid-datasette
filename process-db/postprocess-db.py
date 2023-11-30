@@ -536,6 +536,28 @@ def postprocess(parsed_args: ParsedArgs):
             connection.commit()
             print("done")
 
+            cursor.executescript(
+                """-- sql
+                CREATE VIEW articles_pageviews
+                AS
+                SELECT url,
+                    views_365d
+                FROM
+                    (SELECT slug
+                    FROM posts
+                    WHERE TYPE = "post"
+                    UNION SELECT slug
+                    FROM posts_gdocs
+                    WHERE content not like '%topic-page%' ) posts
+                JOIN pageviews ON "https://ourworldindata.org/" || posts.slug = pageviews.url
+                WHERE url <> "https://ourworldindata.org/"
+                ORDER BY views_365d DESC
+                """
+            )
+
+            connection.commit()
+            print("done")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
