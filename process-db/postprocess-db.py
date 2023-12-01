@@ -75,8 +75,8 @@ def postprocess(parsed_args: ParsedArgs):
                 print("Remove all posts_gdocs that are not published")
                 cursor.execute("DELETE FROM posts_gdocs WHERE published=0")
 
-                print("Dropping confidential table pageviews")
-                cursor.execute("DROP TABLE IF EXISTS pageviews")
+                print("Dropping confidential table analytics_pageviews")
+                cursor.execute("DROP TABLE IF EXISTS analytics_pageviews")
 
             print("Create relationship table charts_variables")
             cursor.execute(
@@ -388,7 +388,7 @@ def postprocess(parsed_args: ParsedArgs):
                     FROM
                         charts c
                     LEFT JOIN
-                        pageviews pv ON pv.url = "https://ourworldindata.org/grapher/" || c.slug
+                        analytics_pageviews pv ON pv.url = "https://ourworldindata.org/grapher/" || c.slug
                     WHERE
                         json_extract(config, '$.isPublished') = 1
                     ORDER BY
@@ -414,11 +414,11 @@ def postprocess(parsed_args: ParsedArgs):
                     SELECT url,
                         max(views_365d) AS views_365d,
                         min(page_format) AS page_format
-                    FROM pageviews pv
+                    FROM analytics_pageviews pv
                     JOIN topic_pages tp ON replace(pv.url, "https://ourworldindata.org/", "") = tp.slug
                     WHERE DAY =
                             (SELECT max(DAY)
-                            FROM pageviews)
+                            FROM analytics_pageviews)
                         AND slug not in ("",
                                         "privacy-policy",
                                         "blog",
@@ -462,7 +462,7 @@ def postprocess(parsed_args: ParsedArgs):
                     SELECT t.name AS tag_name,
                         sum(views_365d) AS views_365d
                     FROM all_tags
-                    JOIN pageviews pv ON pv.url = all_tags.url
+                    JOIN analytics_pageviews pv ON pv.url = all_tags.url
                     JOIN tags t ON t.id = all_tags.tag_id
                     WHERE name not in ("Entries",
                                     "Uncategorized")
@@ -525,7 +525,7 @@ def postprocess(parsed_args: ParsedArgs):
                 FROM
                     explorers
                 LEFT JOIN
-                    pageviews ON pageviews.url = "https://ourworldindata.org/explorers/" || slug
+                    analytics_pageviews ON analytics_pageviews.url = "https://ourworldindata.org/explorers/" || slug
                 WHERE
                     isPublished
                 ORDER BY
@@ -549,7 +549,7 @@ def postprocess(parsed_args: ParsedArgs):
                     UNION SELECT slug
                     FROM posts_gdocs
                     WHERE content not like '%topic-page%' ) posts
-                JOIN pageviews ON "https://ourworldindata.org/" || posts.slug = pageviews.url
+                JOIN analytics_pageviews ON "https://ourworldindata.org/" || posts.slug = analytics_pageviews.url
                 WHERE url <> "https://ourworldindata.org/"
                 ORDER BY views_365d DESC
                 """
