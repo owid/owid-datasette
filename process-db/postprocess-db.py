@@ -548,7 +548,8 @@ def postprocess(parsed_args: ParsedArgs):
                     WHERE TYPE = "post"
                     UNION SELECT slug
                     FROM posts_gdocs
-                    WHERE content not like '%topic-page%' ) posts
+                    WHERE content not like '%topic-page%'
+                    AND published = 1 ) posts
                 JOIN analytics_pageviews ON "https://ourworldindata.org/" || posts.slug = analytics_pageviews.url
                 WHERE url <> "https://ourworldindata.org/"
                 ORDER BY views_365d DESC
