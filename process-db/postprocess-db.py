@@ -541,7 +541,10 @@ def postprocess(parsed_args: ParsedArgs):
                 CREATE VIEW articles_pageviews
                 AS
                 SELECT url,
-                    views_365d
+                    views_365d,
+                    views_14d,
+                    views_7d,
+                    cast(views_7d as float) / (views_14d - views_7d) - 1 as change_7d
                 FROM
                     (SELECT slug
                     FROM posts
