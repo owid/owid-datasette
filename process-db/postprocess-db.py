@@ -204,7 +204,7 @@ def postprocess(parsed_args: ParsedArgs):
                 WHERE chartId in
                         (SELECT id
                         FROM charts
-                        WHERE json_extract(config, "$.isPublished"))
+                        WHERE json_extract(config, "$.isPublished") AND json_extract(config, "$.logo") IS NULL)
                 GROUP BY chartId),
                 charts_per_variable AS
                 (SELECT variables,
