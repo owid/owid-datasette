@@ -307,6 +307,7 @@ def postprocess(parsed_args: ParsedArgs):
             where
                 json_extract(config, "$.maxTime") is not null
                 and json_extract(config, "$.maxTime") != "latest"
+                and json_extract(config, "$.isPublished")
                 """
             )
 
