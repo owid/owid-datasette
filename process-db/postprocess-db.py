@@ -306,6 +306,7 @@ def postprocess(parsed_args: ParsedArgs):
                 charts
             where
                 json_extract(config, "$.maxTime") is not null
+                and json_extract(config, "$.maxTime") != "earliest"
                 and json_extract(config, "$.maxTime") != "latest"
                 and json_extract(config, "$.isPublished")
                 """
