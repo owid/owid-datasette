@@ -298,17 +298,16 @@ def postprocess(parsed_args: ParsedArgs):
                 """-- sql
             CREATE VIEW charts_with_manual_year
             AS
-            select
-                id,
+            SELECT id,
                 title,
-                printf("https://owid.cloud/admin/charts/%s/edit", id) as edit_url
-            from
-                charts
-            where
-                json_extract(config, "$.maxTime") is not null
-                and json_extract(config, "$.maxTime") != "earliest"
-                and json_extract(config, "$.maxTime") != "latest"
-                and json_extract(config, "$.isPublished")
+                printf("https://owid.cloud/admin/charts/%s/edit", id) AS edit_url
+            FROM charts
+            WHERE ((json_extract(config, "$.maxTime") IS NOT NULL
+                    AND json_extract(config, "$.maxTime") != "earliest"
+                    AND json_extract(config, "$.maxTime") != "latest")
+                OR (json_extract(config, "$.map.time") != "latest"
+                    AND json_extract(config, "$.hasMapTab") = TRUE))
+                AND json_extract(config, "$.isPublished")
                 """
             )
 
