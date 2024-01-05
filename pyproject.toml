@@ -18,6 +18,7 @@ datasette-vega = "^0.6.2"
 datasette-pretty-json = "^0.2.2"
 datasette-rure = "^0.3"
 datasette-hovercards = "^0.1a0"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
