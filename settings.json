@@ -1,6 +1,6 @@
 {
     "default_cache_ttl": 3600,
     "max_returned_rows": 6000,
-    "sql_time_limit_ms": 8000,
+    "sql_time_limit_ms": 20000,
     "facet_time_limit_ms": 1000
 }
