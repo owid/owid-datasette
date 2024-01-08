@@ -60,7 +60,7 @@ poetry run python process-db/extract-links.py owid-private.db
 # Gzip the file
 gzip -9 -c owid-public.db > owid.db.gz
 # And upload to s3
-s3cmd put -P owid.db.gz s3://owid-public
+#s3cmd put -P owid.db.gz s3://owid-public
 # After uploading the public version, delete it and rename the private version to owid.db
 # We do this so that metadata.yml can point to owid.db and we don't have to duplciate
 # that file for public and private
