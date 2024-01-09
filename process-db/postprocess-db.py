@@ -25,7 +25,9 @@ def deep_merge(base_dict, overlay_dict):
     base_dict_copy = copy.deepcopy(base_dict)
     for key in overlay_dict:
         if key in base_dict_copy:
-            if isinstance(base_dict_copy[key], dict) and isinstance(overlay_dict[key], dict):
+            if isinstance(base_dict_copy[key], dict) and isinstance(
+                overlay_dict[key], dict
+            ):
                 deep_merge(base_dict_copy[key], overlay_dict[key])
             else:
                 base_dict_copy[key] = overlay_dict[key]
@@ -141,6 +143,8 @@ def postprocess(parsed_args: ParsedArgs):
                 ADD COLUMN subtitle TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.subtitle'))  VIRTUAL;
             ALTER TABLE charts
                 ADD COLUMN note TEXT GENERATED ALWAYS as (JSON_EXTRACT(config, '$.note'))  VIRTUAL;
+            ALTER TABLE charts 
+                ADD COLUMN title_plus_variant GENERATED ALWAYS as (printf("%s (%s)", title, json_extract(config, "$.variantName"))) VIRTUAL;
                 """
             )
 
@@ -169,6 +173,13 @@ def postprocess(parsed_args: ParsedArgs):
                 ADD COLUMN link TEXT GENERATED ALWAYS as (JSON_EXTRACT(description, '$.link')) VIRTUAL;
             ALTER TABLE sources
                 ADD COLUMN dataPublishedBy TEXT GENERATED ALWAYS as (JSON_EXTRACT(description, '$.dataPublishedBy')) VIRTUAL;
+                """
+            )
+
+            print("Add indices to charts")
+            cursor.executescript(
+                """-- sql
+            CREATE INDEX idx_title_plus_variant ON charts(title_plus_variant);
                 """
             )
 
@@ -383,30 +394,15 @@ def postprocess(parsed_args: ParsedArgs):
             # Charts with an identical title, variant included
             cursor.executescript(
                 """-- sql
-            CREATE VIEW charts_same_title_variant
-            AS
-            with full_titles as (
-            select
-                printf(
-                "%s (%s)",
-                title,
-                json_extract(config, "$.variantName")
-                ) as full_title,
-                id
-            from
-                charts
-            where
-                json_extract(config, "$.isPublished")
-            )
-            select
-            a.full_title,
-            printf("https://owid.cloud/admin/charts/%s/edit", a.id) as chartA,
-            printf("https://owid.cloud/admin/charts/%s/edit", b.id) as chartB
-            from
-            full_titles a
-            join full_titles b on a.full_title = b.full_title
-            and a.id < b.id
-            order by 1
+            CREATE VIEW charts_same_title_variant AS
+            SELECT
+                a.title_plus_variant,
+                printf("https://owid.cloud/admin/charts/%s/edit", a.id) as chartA,
+                printf("https://owid.cloud/admin/charts/%s/edit", b.id) as chartB
+            FROM
+                charts a
+                JOIN charts b ON a.title_plus_variant = b.title_plus_variant AND a.id < b.id
+            ORDER BY 1
                 """
             )
 
