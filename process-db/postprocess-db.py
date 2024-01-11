@@ -402,6 +402,8 @@ def postprocess(parsed_args: ParsedArgs):
             FROM
                 charts a
                 JOIN charts b ON a.title_plus_variant = b.title_plus_variant AND a.id < b.id
+            WHERE json_extract(a.config, '$.isPublished') = 1
+                AND json_extract(b.config, '$.isPublished') = 1
             ORDER BY 1
                 """
             )
