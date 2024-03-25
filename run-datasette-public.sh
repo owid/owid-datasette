@@ -1,3 +1,3 @@
 #!/bin/bash -e
 
-poetry run datasette owid-public.sqlite -h 0.0.0.0 -p 8002 --static assets:static-files/ --cors -m metadata.yml --setting sql_time_limit_ms 4000 --setting default_cache_ttl 3600 --setting max_returned_rows 6000 --setting facet_time_limit_ms 1000
+poetry run datasette owid-public.db -h 0.0.0.0 -p 8002 --static assets:static-files/ --cors -m metadata.yml --setting sql_time_limit_ms 4000 --setting default_cache_ttl 3600 --setting max_returned_rows 6000 --setting facet_time_limit_ms 1000
