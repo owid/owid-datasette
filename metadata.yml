@@ -47,10 +47,24 @@ databases:
         sort_desc: id
         label_column: title
         description: |
-          This table contains the full text for all our posts in html form. The format is a bit odd as it represents a direct copy from
+          This table contains the full text for all our old WORDPRESS content in html form. The format is a bit odd as it represents a direct copy from
           wordpress content that includes a lot of wordpress specific comments that carry some meaning in terms of layout instructions etc..
           The html in the content column can thus be rendered as is but will not look identical to the way it looks on our website as several
           post processing steps are not applied yet. The content should work though as a readable approximation for every post.
+
+          For easy searching etc, a markdown copy of the content is available in the markdown column.
+
+          If you want to query all posts (both wordpress and gdocs), use the posts_unified table or the posts_unified_with_content view.
+      posts_gdocs:
+        sort_desc: id
+        label_column: title
+        description: |
+          This table contains the GDocs posts. A lot of interesting data is the content column which is a json blob containing, among other things,
+          the archieml as parsed json.
+
+          For easy searching etc, a markdown copy of the content is available in the markdown column.
+
+          If you want to query all posts (both wordpress and gdocs), use the posts_unified table or the posts_unified_with_content view.
       sources:
         sort_desc: id
         label_column: name
@@ -85,26 +99,36 @@ databases:
           This table contains a some summary statistics about the data values for most variables. For historical and performance
           reasons, creating this table is currently done at different intervals than the rest of the sqlite dump and so the very
           most recent variables may not be present in this statistics table.
-      post_html_tags:
-        description: |
-          This table extracts all html tags and their attributes from the posts table's content. This is useful for statistics for the backporting
-          wordpress to ArchieML project. Note that both opening and closing tags are listed here.
-      post_wp_tags:
-        description: |
-          This table extracts all special wordpress comment tags from the posts table's content. This is useful for statistics for the backporting
-          wordpress to ArchieML project. Note that both opening and closing tags are listed here so if you calculate counts etc you will want to
-          divide by two to get the correct number.
-      unused_old_datasets:
-        description:
-      charts_without_topic:
-        description:
-      charts_potential_duplicates:
-        description:
       charts_broken_origin_url:
         description: |
           Charts where there's an origin URL set, but no post exists for that URL.
           Sometimes this just means that a redirect has been set up in the meantime, and so the link still works for the user.
           However, in this case we still display the outdated post URL with the chart - and, crucially, there will not be any "related charts" presented to the user, since these are based on the origin URL and don't take redirects into account.
+      posts_unified:
+        description: |
+          This table merges gdocs and wordpress posts. Use this one over either the posts or posts_gdocs table if you want to
+          query for content. This table adds several very useful convenience features:
+
+          In our publishing pipeline, GDocs posts take precedence over wordpress posts with the same slug. This table likewise shows
+          only the published gdocs post result row and hides the wordpress post row with the same slug if there is one.
+
+          The Gdocs posts have a type column. This table also retrofits this type to wordpress posts. The type is one of:
+          topic-page - modular topic pages with key insights etc
+          article - article pages (which also contains some admin-like pages e.g. the /privacy-policy page)
+          linear-topic-page - old style linear topic pages (formerly called entries)
+          data-insights - the new short data insights
+          author - author pages
+          about-page - about pages like the team page
+          fragment - utility page fragments like the details on demand doc or data page FAQs
+          homepage - a special type just for the homepage
+
+          The wordpressId and gdocId columns respectively can be used to a) figure out which of the two is the source for any given
+          row and b) join to the corresponding entity.
+
+          This table does not contain either archieml nor markdown content (for space reasons). If you care for those, consult the view posts_unified_with_content
+      posts_unified_with_content:
+        description: |
+          This view extends the posts_unified table with the archieml and markdown content columns. Consult the docs for posts_unified for the other columns.
 extra_css_urls:
   - "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
   - "/assets/owid-styles.css"
